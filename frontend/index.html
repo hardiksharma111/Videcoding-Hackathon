@@ -59,16 +59,6 @@
           </div>
         </section>
 
-        <button class="ghost-button settings-rail-btn" id="settingsRailBtn" type="button">
-          <span class="nav-icon">⚙</span>
-          <span class="settings-copy">Settings</span>
-        </button>
-
-        <div class="sidebar-search glass-subtle">
-          <span>Search</span>
-          <input id="searchInput" type="search" placeholder="Topics, rooms, people" />
-        </div>
-
         <nav class="nav-stack" aria-label="Primary navigation">
           <button class="nav-link active" data-view="home">
             <span class="nav-icon">⌂</span>
@@ -85,6 +75,10 @@
           <button class="nav-link" data-view="profile">
             <span class="nav-icon">◎</span>
             <span class="nav-copy"><span>Profile</span><small>Anonymity points</small></span>
+          </button>
+          <button class="nav-link" data-view="settings">
+            <span class="nav-icon">⚙</span>
+            <span class="nav-copy"><span>Settings</span><small>Privacy and controls</small></span>
           </button>
         </nav>
 
@@ -120,31 +114,6 @@
 
         <section id="viewRoot" class="view-root"></section>
       </main>
-
-      <aside class="right-rail glass" id="rightRail">
-        <section class="rail-card glass-subtle">
-          <p class="label">Live room</p>
-          <h3 id="railRoomTitle">Pixel cafe</h3>
-          <p id="railRoomText" class="muted">12/15 users active · messages expire after 24 hours of inactivity.</p>
-        </section>
-
-        <section class="rail-card glass-subtle">
-          <p class="label">Safety</p>
-          <p>
-            Only avatar, generated username, and activity status are visible when viewing another user.
-          </p>
-          <button class="ghost-button" id="openProfileBtn" type="button">View anonymous profile</button>
-        </section>
-
-        <section class="rail-card glass-subtle">
-          <p class="label">Quick actions</p>
-          <div class="rail-actions">
-            <button class="ghost-button" type="button">Whisper</button>
-            <button class="ghost-button" type="button">Report</button>
-            <button class="ghost-button" type="button">Give points</button>
-          </div>
-        </section>
-      </aside>
     </div>
 
     <div class="modal-backdrop hidden" id="roomModal">

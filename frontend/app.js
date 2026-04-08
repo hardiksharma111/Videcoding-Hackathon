@@ -83,15 +83,10 @@ const els = {
   viewRoot: document.getElementById('viewRoot'),
   pageTitle: document.getElementById('pageTitle'),
   pageSubtitle: document.getElementById('pageSubtitle'),
-  rightRail: document.getElementById('rightRail'),
-  railRoomTitle: document.getElementById('railRoomTitle'),
-  railRoomText: document.getElementById('railRoomText'),
-  searchInput: document.getElementById('searchInput'),
   createRoomBtn: document.getElementById('createRoomBtn'),
   sidebarRoomTitle: document.getElementById('sidebarRoomTitle'),
   sidebarRoomMeta: document.getElementById('sidebarRoomMeta'),
   jumpToRoomBtn: document.getElementById('jumpToRoomBtn'),
-  openProfileBtn: document.getElementById('openProfileBtn'),
   roomModal: document.getElementById('roomModal'),
   closeRoomModal: document.getElementById('closeRoomModal'),
   profileModal: document.getElementById('profileModal'),
@@ -104,7 +99,6 @@ const els = {
   themeButtons: document.querySelectorAll('.theme-btn'),
   sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
   appShell: document.querySelector('.app-shell'),
-  settingsRailBtn: document.getElementById('settingsRailBtn'),
 };
 
 function escapeHtml(value) {
@@ -189,9 +183,6 @@ function renderHome() {
   const selectedRoom = state.room;
   els.pageTitle.textContent = 'Home';
   els.pageSubtitle.textContent = 'Your active chat sits front and center.';
-  els.rightRail.style.display = '';
-  els.railRoomTitle.textContent = selectedRoom.title;
-  els.railRoomText.textContent = `${selectedRoom.users} users active · ${selectedRoom.status} · messages expire after 24 hours of inactivity.`;
   syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
@@ -251,9 +242,6 @@ function renderDiscover() {
 
   els.pageTitle.textContent = 'Discover';
   els.pageSubtitle.textContent = 'Tap a bubble to see rooms for that category and create your own space.';
-  els.rightRail.style.display = '';
-  els.railRoomTitle.textContent = 'Context feeds';
-  els.railRoomText.textContent = 'Choose a bubble, browse rooms, or start your own temporary room.';
   syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
@@ -327,9 +315,6 @@ function renderRooms() {
 
   els.pageTitle.textContent = 'Active Rooms';
   els.pageSubtitle.textContent = 'Browse your temporary chatrooms and set the active room quickly.';
-  els.rightRail.style.display = '';
-  els.railRoomTitle.textContent = 'Room directory';
-  els.railRoomText.textContent = 'Each room supports anonymous chat with a 15 person limit.';
   syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
@@ -378,9 +363,6 @@ function renderRooms() {
 function renderProfile() {
   els.pageTitle.textContent = 'Profile';
   els.pageSubtitle.textContent = 'Identity controls, trust growth, and safety tools in one place.';
-  els.rightRail.style.display = '';
-  els.railRoomTitle.textContent = 'Profile';
-  els.railRoomText.textContent = 'Other users only see avatar, username, and status.';
   syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
@@ -463,6 +445,46 @@ function renderProfile() {
   `;
 }
 
+function renderSettings() {
+  els.pageTitle.textContent = 'Settings';
+  els.pageSubtitle.textContent = 'Tune privacy, notifications, and moderation behavior.';
+  syncSidebarRoom();
+
+  els.viewRoot.innerHTML = `
+    <section class="view-panel">
+      <div class="panel-head">
+        <div>
+          <p class="label">Privacy</p>
+          <h3>Control your anonymous presence</h3>
+        </div>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <div>
+            <p class="label">Whisper requests</p>
+            <strong>Allow from trusted users only</strong>
+          </div>
+          <span class="toggle on"></span>
+        </div>
+        <div class="settings-row">
+          <div>
+            <p class="label">Room invites</p>
+            <strong>Only from joined categories</strong>
+          </div>
+          <span class="toggle on"></span>
+        </div>
+        <div class="settings-row">
+          <div>
+            <p class="label">Moderation alerts</p>
+            <strong>Immediate warnings</strong>
+          </div>
+          <span class="toggle on"></span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function hydrateAnonymousIdentity() {
   els.sidebarAvatar.textContent = anonymousUser.icon;
   els.sidebarDisplayName.textContent = anonymousUser.name;
@@ -480,6 +502,8 @@ function render() {
     renderRooms();
   } else if (state.view === 'profile') {
     renderProfile();
+  } else if (state.view === 'settings') {
+    renderSettings();
   }
 }
 
@@ -493,15 +517,8 @@ els.themeButtons.forEach((button) => {
 
 els.sidebarToggleBtn.addEventListener('click', toggleSidebar);
 
-els.searchInput.addEventListener('input', (event) => {
-  state.search = event.target.value;
-  render();
-});
-
 els.createRoomBtn.addEventListener('click', () => openModal(els.roomModal));
-els.openProfileBtn.addEventListener('click', () => openModal(els.profileModal));
 els.jumpToRoomBtn.addEventListener('click', () => setView('home'));
-els.settingsRailBtn.addEventListener('click', () => setView('profile'));
 els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
 

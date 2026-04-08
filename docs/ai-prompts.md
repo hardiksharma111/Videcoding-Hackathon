@@ -22,6 +22,8 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Remove uneven empty vertical space in discover by tightening layout alignment and content flow.
 - Add a dedicated settings button in the left GUI below profile and hide the VibeHack brand mark in minimized mode.
 - Replace fixed profile initials with randomized anonymous icon/name identity on sidebar and profile surfaces.
+- Move Settings into the same left nav style directly below Profile and remove the separate sidebar search panel.
+- Remove the right-side helper panel and adopt a unique non-generic night palette while keeping morning mode unchanged.
 
 ## Notes
 
