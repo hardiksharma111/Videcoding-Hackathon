@@ -35,10 +35,17 @@ Option 2 (static server):
 
 ## Deployment
 
-GitHub Pages auto-deploy is configured via GitHub Actions from `frontend/` on push to `main`.
+No repo workflow is required. Fastest zero-config option:
 
-After enabling Pages in repo settings, expected URL format:
-- `https://hardiksharma111.github.io/VibeHack/`
+1. Import this repo into Vercel.
+2. Set Root Directory to `frontend`.
+3. Deploy.
+
+You can also use Netlify with the same setup:
+
+1. New site from Git.
+2. Base directory: `frontend`.
+3. Publish directory: `.`
 
 ## Repo Hygiene
 

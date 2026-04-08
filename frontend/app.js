@@ -74,6 +74,19 @@ const anonymousUser = {
   status: 'Online · Veteran tier',
 };
 
+const defaultRoomMessages = {
+  'Pixel cafe': [
+    { author: 'QuietNova', body: 'Shared a fresh card layout mockup. Need fast feedback.', me: false, time: '2m ago' },
+    { author: anonymousUser.name, body: 'Looks clean. I would tighten spacing in the stats row.', me: true, time: '1m ago' },
+  ],
+  'Quiet sprint': [
+    { author: 'SoftSignal', body: 'Starting 25 minute focus sprint now.', me: false, time: '5m ago' },
+    { author: 'MistyOrbit', body: 'In. I will post progress at the 20 minute mark.', me: false, time: '4m ago' },
+  ],
+};
+
+const roomMessages = {};
+
 const STORAGE_KEY = 'vibehack-ui-state-v1';
 
 const state = {
@@ -88,6 +101,7 @@ const state = {
     roomInvites: true,
     moderationAlerts: true,
   },
+  chatDraft: '',
 };
 
 const els = {
@@ -130,6 +144,7 @@ function savePersistentState() {
     rooms,
     topics,
     weeklyActivity,
+    roomMessages,
     state: {
       roomTitle: state.room?.title,
       theme: state.theme,
@@ -158,6 +173,9 @@ function loadPersistentState() {
     }
     if (Array.isArray(parsed.weeklyActivity) && parsed.weeklyActivity.length) {
       weeklyActivity.splice(0, weeklyActivity.length, ...parsed.weeklyActivity);
+    }
+    if (parsed.roomMessages && typeof parsed.roomMessages === 'object') {
+      Object.assign(roomMessages, parsed.roomMessages);
     }
 
     if (parsed.state?.roomTitle) {
@@ -197,7 +215,8 @@ function escapeHtml(value) {
 function setView(view) {
   state.view = view;
   document.querySelectorAll('.nav-link').forEach((item) => {
-    item.classList.toggle('active', item.dataset.view === view);
+    const isRoomsProxy = view === 'room' && item.dataset.view === 'rooms';
+    item.classList.toggle('active', item.dataset.view === view || isRoomsProxy);
   });
   render();
 }
@@ -338,6 +357,15 @@ function getMonthlySummary() {
     },
     { messages: 0, rooms: 0, whispers: 0 },
   );
+}
+
+function getRoomMessages(roomTitle) {
+  if (!roomMessages[roomTitle]) {
+    roomMessages[roomTitle] = defaultRoomMessages[roomTitle]
+      ? [...defaultRoomMessages[roomTitle]]
+      : [{ author: 'System', body: 'Room started. Be respectful and keep it low-pressure.', me: false, time: 'now' }];
+  }
+  return roomMessages[roomTitle];
 }
 
 function renderHome() {
@@ -529,6 +557,83 @@ function renderDiscover() {
   });
 }
 
+function renderRoomInterface() {
+  const activeRoom = state.room;
+  const messages = getRoomMessages(activeRoom.title);
+
+  els.pageTitle.textContent = activeRoom.title;
+  els.pageSubtitle.textContent = 'Temporary room chat. Messages and context stay lightweight and private.';
+  syncSidebarRoom();
+
+  els.viewRoot.innerHTML = `
+    <section class="view-panel chat-shell">
+      <div class="chat-topline">
+        <div>
+          <p class="label">In room</p>
+          <h3>${escapeHtml(activeRoom.title)}</h3>
+          <div class="chat-meta">
+            <span>${escapeHtml(activeRoom.category)}</span>
+            <span>${escapeHtml(activeRoom.users)} online</span>
+            <span>Auto delete in ~24h</span>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="ghost-button" id="roomDetailOpenBtn" type="button">Details</button>
+          <button class="ghost-button" id="backToRoomsBtn" type="button">All rooms</button>
+        </div>
+      </div>
+
+      <div class="message-feed">
+        ${messages
+          .map(
+            (message) => `
+              <article class="message-row ${message.me ? 'me' : ''}">
+                <strong>${escapeHtml(message.author)}</strong>
+                <p>${escapeHtml(message.body)}</p>
+                <small>${escapeHtml(message.time)}</small>
+              </article>
+            `,
+          )
+          .join('')}
+      </div>
+
+      <form class="composer" id="roomComposerForm">
+        <input id="roomComposerInput" type="text" placeholder="Send something kind and helpful..." value="${escapeHtml(state.chatDraft)}" />
+        <button class="cta-button" type="submit">Send</button>
+      </form>
+    </section>
+  `;
+
+  const roomComposerForm = document.getElementById('roomComposerForm');
+  const roomComposerInput = document.getElementById('roomComposerInput');
+  const roomDetailOpenBtn = document.getElementById('roomDetailOpenBtn');
+  const backToRoomsBtn = document.getElementById('backToRoomsBtn');
+
+  roomComposerInput.addEventListener('input', (event) => {
+    state.chatDraft = event.target.value;
+  });
+
+  roomComposerForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const nextMessage = roomComposerInput.value.trim();
+    if (!nextMessage) {
+      return;
+    }
+    messages.push({
+      author: anonymousUser.name,
+      body: nextMessage,
+      me: true,
+      time: 'now',
+    });
+    state.chatDraft = '';
+    savePersistentState();
+    renderRoomInterface();
+  });
+
+  roomDetailOpenBtn.addEventListener('click', () => openRoomDrawer(activeRoom));
+  backToRoomsBtn.addEventListener('click', () => setView('rooms'));
+}
+
 function renderRooms() {
   const filteredRooms = rooms.filter((room) => {
     const haystack = `${room.title} ${room.category} ${room.description}`.toLowerCase();
@@ -564,9 +669,9 @@ function renderRooms() {
                         <span class="room-badge">${escapeHtml(room.users)}</span>
                       </div>
                       <div class="room-actions">
-                        <button class="ghost-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Make active</button>
+                        <button class="ghost-button room-activate" type="button" data-room="${escapeHtml(room.title)}">Make active</button>
                         <button class="ghost-button room-details" type="button" data-room="${escapeHtml(room.title)}">Details</button>
-                        <button class="cta-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Join</button>
+                        <button class="cta-button room-join" type="button" data-room="${escapeHtml(room.title)}">Join</button>
                       </div>
                     </article>
                   `,
@@ -583,12 +688,20 @@ function renderRooms() {
     roomsCreateRoomBtn.addEventListener('click', () => openModal(els.roomModal));
   }
 
-  document.querySelectorAll('.room-switch').forEach((button) => {
+  document.querySelectorAll('.room-activate').forEach((button) => {
     button.addEventListener('click', (event) => {
       const roomTitle = event.currentTarget.dataset.room;
       setRoom(roomTitle);
-      setView('home');
       showToast(`Active room set to ${roomTitle}`, 'success');
+    });
+  });
+
+  document.querySelectorAll('.room-join').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const roomTitle = event.currentTarget.dataset.room;
+      setRoom(roomTitle);
+      setView('room');
+      showToast(`Entered ${roomTitle}`, 'success');
     });
   });
 
@@ -825,6 +938,8 @@ function createRoomFromModal() {
 function render() {
   if (state.view === 'home') {
     renderHome();
+  } else if (state.view === 'room') {
+    renderRoomInterface();
   } else if (state.view === 'discover') {
     renderDiscover();
   } else if (state.view === 'rooms') {
@@ -847,7 +962,7 @@ els.themeButtons.forEach((button) => {
 els.sidebarToggleBtn.addEventListener('click', toggleSidebar);
 
 els.createRoomBtn.addEventListener('click', () => openModal(els.roomModal));
-els.jumpToRoomBtn.addEventListener('click', () => setView('home'));
+els.jumpToRoomBtn.addEventListener('click', () => setView('room'));
 els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
 els.confirmCreateRoomBtn.addEventListener('click', createRoomFromModal);
