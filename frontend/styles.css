@@ -257,10 +257,19 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   display: none;
 }
 
+.app-shell.sidebar-collapsed .brand-copy h1,
+.app-shell.sidebar-collapsed .brand-copy .eyebrow {
+  display: none;
+}
+
 .app-shell.sidebar-collapsed .brand-row,
 .app-shell.sidebar-collapsed .nav-stack,
 .app-shell.sidebar-collapsed .mini-profile {
   width: 100%;
+}
+
+.app-shell.sidebar-collapsed .brand-row {
+  justify-content: center;
 }
 
 .app-shell.sidebar-collapsed .nav-link {

@@ -136,7 +136,7 @@ function applyTheme(theme) {
 
 function applySidebarState() {
   els.appShell.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
-  els.sidebarToggleBtn.textContent = state.sidebarCollapsed ? '☰' : '✕';
+  els.sidebarToggleBtn.textContent = '☰';
   els.sidebarToggleBtn.setAttribute('aria-pressed', state.sidebarCollapsed ? 'true' : 'false');
 }
 
