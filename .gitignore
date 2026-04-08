@@ -1,0 +1,23 @@
+# Hackathon reference docs kept local only
+Command & Frontend.md
+Rules & Regulation.md
+docs/judge-handoff.md
+
+# Frontend / backend dependency and build outputs
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+coverage/
+out/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/

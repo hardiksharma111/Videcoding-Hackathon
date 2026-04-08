@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeHack | Anonymous Social Space</title>
+    <meta
+      name="description"
+      content="A privacy-first social platform for anonymous, low-pressure communication."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
+    <div class="background-grid"></div>
+
+    <div class="app-shell">
+      <aside class="sidebar glass-card">
+        <div class="brand-block">
+          <div class="brand-mark">V</div>
+          <div>
+            <p class="eyebrow">Hackathon build</p>
+            <h1>VibeHack</h1>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="profile-top">
+            <div class="avatar avatar-large">AR</div>
+            <div>
+              <p class="label">Anonymous profile</p>
+              <h2>EchoBloom</h2>
+              <p class="muted">Online now · privacy-first identity</p>
+            </div>
+          </div>
+          <div class="points-card">
+            <div>
+              <p class="label">Anonymity points</p>
+              <strong>742</strong>
+            </div>
+            <span class="tier badge-veteran">Veteran</span>
+          </div>
+          <div class="meter">
+            <span style="width: 78%"></span>
+          </div>
+          <div class="profile-stats">
+            <div>
+              <strong>18</strong>
+              <span>rooms joined</span>
+            </div>
+            <div>
+              <strong>96%</strong>
+              <span>trust score</span>
+            </div>
+            <div>
+              <strong>24h</strong>
+              <span>message expiry</span>
+            </div>
+          </div>
+        </div>
+
+        <nav class="side-nav">
+          <button class="nav-item active" data-view="home">
+            <span>Home</span>
+            <small>Overview</small>
+          </button>
+          <button class="nav-item" data-view="feeds">
+            <span>Context feeds</span>
+            <small>Topics</small>
+          </button>
+          <button class="nav-item" data-view="rooms">
+            <span>Chatrooms</span>
+            <small>Temporary</small>
+          </button>
+          <button class="nav-item" data-view="profile">
+            <span>Profile</span>
+            <small>Settings</small>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <p class="label">Live safety</p>
+          <p class="muted">Anonymous replies, limited rooms, temporary messages, and quick report actions are visible throughout the interface.</p>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar glass-card">
+          <div>
+            <p class="eyebrow">Spontaneous, low-pressure communication</p>
+            <h2>Discover rooms, post freely, and keep identity private.</h2>
+          </div>
+          <div class="topbar-actions">
+            <label class="search-box">
+              <span>Search</span>
+              <input type="search" id="topicSearch" placeholder="Search topics, rooms, or interests" />
+            </label>
+            <button class="primary-btn" id="createRoomBtn">+ New room</button>
+          </div>
+        </header>
+
+        <section class="dashboard-grid">
+          <article class="hero glass-card">
+            <div class="hero-copy">
+              <p class="eyebrow">Featured space</p>
+              <h3>Speak freely without building a permanent social trail.</h3>
+              <p>
+                A modern social experience shaped around anonymous interaction, topic-based discovery, and temporary chats that disappear when the conversation cools off.
+              </p>
+              <div class="hero-actions">
+                <button class="primary-btn">Join a room</button>
+                <button class="ghost-btn">Browse feeds</button>
+              </div>
+            </div>
+            <div class="hero-panel">
+              <div class="hero-chip">15 users max</div>
+              <div class="hero-chip">24h expiry</div>
+              <div class="hero-chip">Anonymous avatars</div>
+              <div class="hero-preview">
+                <div class="pulse-dot"></div>
+                <div>
+                  <strong>Live topic pulse</strong>
+                  <p>Design, study hacks, mental health, and late-night build energy.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <section class="content-column">
+            <article class="glass-card panel">
+              <div class="panel-header">
+                <div>
+                  <p class="label">Context feed</p>
+                  <h3>Topic streams</h3>
+                </div>
+                <button class="ghost-btn small">See all</button>
+              </div>
+              <div class="topic-grid" id="topicGrid"></div>
+            </article>
+
+            <article class="glass-card panel">
+              <div class="panel-header">
+                <div>
+                  <p class="label">Suggested rooms</p>
+                  <h3>Active temporary chatrooms</h3>
+                </div>
+                <span class="pill">Auto-clean after inactivity</span>
+              </div>
+              <div class="room-list" id="roomList"></div>
+            </article>
+          </section>
+
+          <aside class="right-rail">
+            <article class="glass-card panel bio-card">
+              <div class="panel-header compact">
+                <div>
+                  <p class="label">Profile glimpse</p>
+                  <h3>Minimal visibility</h3>
+                </div>
+              </div>
+              <p>
+                When users open another profile, only the avatar, randomly generated username, and current activity status are visible.
+              </p>
+              <div class="bio-mini-card">
+                <div class="avatar">?A</div>
+                <div>
+                  <strong>User436</strong>
+                  <p class="muted">Offline · Bio hidden</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="glass-card panel activity-card">
+              <div class="panel-header compact">
+                <div>
+                  <p class="label">Today</p>
+                  <h3>Activity snapshot</h3>
+                </div>
+              </div>
+              <div class="activity-list">
+                <div><span>Messages posted</span><strong>42</strong></div>
+                <div><span>Rooms explored</span><strong>11</strong></div>
+                <div><span>Reports resolved</span><strong>4</strong></div>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="footer-strip glass-card">
+          <div>
+            <p class="label">Design direction</p>
+            <h3>Glassmorphism, soft gradients, and playful motion for a friendly anonymous community.</h3>
+          </div>
+          <div class="footer-tags">
+            <span>Mobile-first</span>
+            <span>Accessible</span>
+            <span>Responsive</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop hidden" id="roomModal">
+      <div class="modal glass-card">
+        <button class="close-btn" id="closeModalBtn" aria-label="Close create room dialog">×</button>
+        <p class="eyebrow">Create a new room</p>
+        <h3>Start a temporary space</h3>
+        <p class="muted">This preview keeps the creation flow simple while the backend is still in progress.</p>
+        <div class="modal-grid">
+          <label>
+            <span>Room name</span>
+            <input type="text" placeholder="Late night ideas" />
+          </label>
+          <label>
+            <span>Category</span>
+            <input type="text" placeholder="Design" />
+          </label>
+        </div>
+        <button class="primary-btn full-width">Create room</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
