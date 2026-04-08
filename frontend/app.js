@@ -51,10 +51,14 @@ const rooms = [
   },
 ];
 
-const messages = [
-  { author: 'EchoBloom', text: 'Dropped a rough sketch. Feedback is welcome but keep it easy.', time: '2m', me: false },
-  { author: 'User436', text: 'The glass effect makes it feel calm instead of noisy.', time: '1m', me: false },
-  { author: 'You', text: 'Testing the low-pressure vibe. No pressure, just ideas.', time: 'now', me: true },
+const weeklyActivity = [
+  { day: 'Mon', messages: 32, rooms: 2, whispers: 4 },
+  { day: 'Tue', messages: 51, rooms: 3, whispers: 5 },
+  { day: 'Wed', messages: 44, rooms: 2, whispers: 7 },
+  { day: 'Thu', messages: 67, rooms: 4, whispers: 6 },
+  { day: 'Fri', messages: 92, rooms: 5, whispers: 11 },
+  { day: 'Sat', messages: 58, rooms: 3, whispers: 8 },
+  { day: 'Sun', messages: 38, rooms: 2, whispers: 3 },
 ];
 
 const anonymousIcons = ['◈', '◉', '⬢', '✦', '✶', '◆', '⬡', '◍'];
@@ -89,6 +93,10 @@ const els = {
   jumpToRoomBtn: document.getElementById('jumpToRoomBtn'),
   roomModal: document.getElementById('roomModal'),
   closeRoomModal: document.getElementById('closeRoomModal'),
+  roomNameInput: document.getElementById('roomNameInput'),
+  roomTopicInput: document.getElementById('roomTopicInput'),
+  roomVibeInput: document.getElementById('roomVibeInput'),
+  confirmCreateRoomBtn: document.getElementById('confirmCreateRoomBtn'),
   profileModal: document.getElementById('profileModal'),
   closeProfileBtn: document.getElementById('closeProfileBtn'),
   profileName: document.getElementById('profileName'),
@@ -179,58 +187,116 @@ function syncSidebarRoom() {
   els.sidebarRoomMeta.textContent = `${state.room.category} · ${state.room.users} online · temporary room`;
 }
 
+function getPeakDayBy(field) {
+  return weeklyActivity.reduce((peak, day) => (day[field] > peak[field] ? day : peak), weeklyActivity[0]);
+}
+
+function getMonthlySummary() {
+  return weeklyActivity.reduce(
+    (acc, day) => {
+      acc.messages += day.messages;
+      acc.rooms += day.rooms;
+      acc.whispers += day.whispers;
+      return acc;
+    },
+    { messages: 0, rooms: 0, whispers: 0 },
+  );
+}
+
 function renderHome() {
   const selectedRoom = state.room;
+  const monthly = getMonthlySummary();
+  const peakMessages = getPeakDayBy('messages');
+  const peakRooms = getPeakDayBy('rooms');
+  const peakWhispers = getPeakDayBy('whispers');
+  const maxMessages = Math.max(...weeklyActivity.map((d) => d.messages));
+
   els.pageTitle.textContent = 'Home';
-  els.pageSubtitle.textContent = 'Your active chat sits front and center.';
+  els.pageSubtitle.textContent = 'Track activity, momentum, and communication patterns across your temporary rooms.';
   syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
-    <section class="view-panel chat-shell">
-      <div class="chat-topline">
+    <section class="view-panel">
+      <div class="panel-head">
         <div>
-          <p class="label">Active room</p>
-          <h3>${escapeHtml(selectedRoom.title)}</h3>
-          <div class="chat-meta">
-            <span>${escapeHtml(selectedRoom.category)}</span>
-            <span>${escapeHtml(selectedRoom.users)} online</span>
-            <span>Temporary chat</span>
-          </div>
+          <p class="label">Overview</p>
+          <h3>Your communication dashboard</h3>
         </div>
-        <span class="room-badge">24h expiry</span>
+        <span class="tier-pill">Current room: ${escapeHtml(selectedRoom.title)}</span>
       </div>
-      <div class="message-feed" id="messageFeed"></div>
-      <form class="composer" id="messageComposer">
-        <input id="messageInput" type="text" maxlength="140" placeholder="Post something low-pressure..." />
-        <button class="cta-button" type="submit">Send</button>
-      </form>
+      <div class="stats-grid">
+        <article class="stat-card">
+          <p class="label">Daily messages</p>
+          <strong>${weeklyActivity[weeklyActivity.length - 1].messages}</strong>
+          <small class="bar-label">Today</small>
+        </article>
+        <article class="stat-card">
+          <p class="label">Monthly messages</p>
+          <strong>${monthly.messages}</strong>
+          <small class="bar-label">Rolling 7-day sample</small>
+        </article>
+        <article class="stat-card">
+          <p class="label">Rooms joined</p>
+          <strong>${monthly.rooms}</strong>
+          <small class="bar-label">This period</small>
+        </article>
+        <article class="stat-card">
+          <p class="label">Whispers sent</p>
+          <strong>${monthly.whispers}</strong>
+          <small class="bar-label">This period</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="view-panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="label">Highlights</p>
+          <h3>Best performing days</h3>
+        </div>
+      </div>
+      <div class="highlights-grid">
+        <article class="highlight-card">
+          <p class="label">Most messages</p>
+          <strong>${peakMessages.day}</strong>
+          <p>${peakMessages.messages} messages</p>
+        </article>
+        <article class="highlight-card">
+          <p class="label">Most room activity</p>
+          <strong>${peakRooms.day}</strong>
+          <p>${peakRooms.rooms} rooms joined</p>
+        </article>
+        <article class="highlight-card">
+          <p class="label">Most whispers</p>
+          <strong>${peakWhispers.day}</strong>
+          <p>${peakWhispers.whispers} whispers sent</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="view-panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="label">Weekly pattern</p>
+          <h3>Messages by day</h3>
+        </div>
+      </div>
+      <div class="weekly-chart">
+        ${weeklyActivity
+          .map((entry) => {
+            const height = Math.max(24, Math.round((entry.messages / maxMessages) * 140));
+            return `
+              <div class="bar-wrap">
+                <div class="bar" style="height:${height}px"></div>
+                <span class="bar-value">${entry.messages}</span>
+                <span class="bar-label">${entry.day}</span>
+              </div>
+            `;
+          })
+          .join('')}
+      </div>
     </section>
   `;
-
-  const feed = document.getElementById('messageFeed');
-  feed.innerHTML = messages
-    .map(
-      (message) => `
-        <article class="message-row ${message.me ? 'me' : ''}">
-          <strong>${escapeHtml(message.author)}</strong>
-          <p>${escapeHtml(message.text)}</p>
-          <small>${escapeHtml(message.time)} · temporary message</small>
-        </article>
-      `,
-    )
-    .join('');
-
-  document.getElementById('messageComposer').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const input = document.getElementById('messageInput');
-    const text = input.value.trim();
-    if (!text) {
-      return;
-    }
-    messages.unshift({ author: 'You', text, time: 'just now', me: true });
-    input.value = '';
-    renderHome();
-  });
 }
 
 function renderDiscover() {
@@ -493,6 +559,41 @@ function hydrateAnonymousIdentity() {
   els.profileName.textContent = `${anonymousUser.name}${Math.floor(Math.random() * 900) + 100}`;
 }
 
+function createRoomFromModal() {
+  const title = els.roomNameInput.value.trim();
+  const category = els.roomTopicInput.value.trim();
+  const vibe = els.roomVibeInput.value.trim();
+
+  if (!title || !category) {
+    return;
+  }
+
+  rooms.unshift({
+    title,
+    category,
+    users: '1/15',
+    status: 'Just now',
+    description: vibe ? `Room vibe: ${vibe}` : 'Newly created temporary room.',
+    selected: false,
+  });
+
+  const topicExists = topics.some((topic) => topic.name.toLowerCase() === category.toLowerCase());
+  if (!topicExists) {
+    topics.push({
+      name: category,
+      description: 'Custom category created from room setup.',
+      members: 1,
+      tone: 'Fresh',
+    });
+  }
+
+  els.roomNameInput.value = '';
+  els.roomTopicInput.value = '';
+  els.roomVibeInput.value = '';
+  closeModal(els.roomModal);
+  setView('rooms');
+}
+
 function render() {
   if (state.view === 'home') {
     renderHome();
@@ -521,6 +622,7 @@ els.createRoomBtn.addEventListener('click', () => openModal(els.roomModal));
 els.jumpToRoomBtn.addEventListener('click', () => setView('home'));
 els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
+els.confirmCreateRoomBtn.addEventListener('click', createRoomFromModal);
 
 els.roomModal.addEventListener('click', (event) => {
   if (event.target === els.roomModal) {

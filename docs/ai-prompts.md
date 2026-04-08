@@ -24,6 +24,9 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Replace fixed profile initials with randomized anonymous icon/name identity on sidebar and profile surfaces.
 - Move Settings into the same left nav style directly below Profile and remove the separate sidebar search panel.
 - Remove the right-side helper panel and adopt a unique non-generic night palette while keeping morning mode unchanged.
+- Replace symbol nav icons with custom SVG icon badges for a more polished app identity.
+- Convert Home from chat view to an analytics dashboard showing daily/monthly stats and best-performing days.
+- Connect frontend flow by making Create Room update local room/category state immediately.
 
 ## Notes
 

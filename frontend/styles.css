@@ -215,7 +215,12 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   place-items: center;
   background: rgba(255, 255, 255, 0.04);
   flex: 0 0 auto;
-  font-size: 1.05rem;
+  color: color-mix(in srgb, var(--text) 86%, var(--accent) 14%);
+}
+
+.nav-icon svg {
+  width: 16px;
+  height: 16px;
 }
 .nav-copy {
   display: block;
@@ -475,6 +480,75 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
 .chat-shell {
   display: grid;
   gap: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  border-radius: 20px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-card strong {
+  display: block;
+  font-size: 1.6rem;
+  margin: 0.3rem 0;
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.highlight-card {
+  border-radius: 18px;
+  padding: 14px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.highlight-card strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 1.2rem;
+}
+
+.weekly-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  min-height: 190px;
+}
+
+.bar-wrap {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.bar {
+  width: min(100%, 40px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 86%, white 14%), color-mix(in srgb, var(--accent-2) 70%, var(--accent) 30%));
+  min-height: 20px;
+}
+
+.bar-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.bar-value {
+  font-size: 0.8rem;
+  color: var(--text);
 }
 .chat-topline,
 .message-row,
@@ -763,6 +837,9 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   .modal-grid,
   .composer,
   .split-grid,
+  .stats-grid,
+  .highlights-grid,
+  .weekly-chart,
   .profile-layout,
   .feature-grid,
   .profile-grid,
