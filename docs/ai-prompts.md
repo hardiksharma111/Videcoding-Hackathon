@@ -27,6 +27,7 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Replace symbol nav icons with custom SVG icon badges for a more polished app identity.
 - Convert Home from chat view to an analytics dashboard showing daily/monthly stats and best-performing days.
 - Connect frontend flow by making Create Room update local room/category state immediately.
+- Add the next UX maturity layer with persistent local state, profile mini charts, room detail drawer interactions, and toast feedback without breaking the privacy-first temporary-chat vision.
 
 ## Notes
 

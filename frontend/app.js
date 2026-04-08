@@ -74,6 +74,8 @@ const anonymousUser = {
   status: 'Online · Veteran tier',
 };
 
+const STORAGE_KEY = 'vibehack-ui-state-v1';
+
 const state = {
   view: 'home',
   room: rooms.find((room) => room.selected) ?? rooms[0],
@@ -81,6 +83,11 @@ const state = {
   topicFilter: 'all',
   theme: localStorage.getItem('vibehack-theme') || 'night',
   sidebarCollapsed: false,
+  settings: {
+    whisperRequests: true,
+    roomInvites: true,
+    moderationAlerts: true,
+  },
 };
 
 const els = {
@@ -99,6 +106,15 @@ const els = {
   confirmCreateRoomBtn: document.getElementById('confirmCreateRoomBtn'),
   profileModal: document.getElementById('profileModal'),
   closeProfileBtn: document.getElementById('closeProfileBtn'),
+  roomDrawerBackdrop: document.getElementById('roomDrawerBackdrop'),
+  roomDrawer: document.getElementById('roomDrawer'),
+  closeRoomDrawerBtn: document.getElementById('closeRoomDrawerBtn'),
+  drawerRoomTitle: document.getElementById('drawerRoomTitle'),
+  drawerRoomMeta: document.getElementById('drawerRoomMeta'),
+  drawerRoomDescription: document.getElementById('drawerRoomDescription'),
+  drawerExpiry: document.getElementById('drawerExpiry'),
+  drawerMembers: document.getElementById('drawerMembers'),
+  toastStack: document.getElementById('toastStack'),
   profileName: document.getElementById('profileName'),
   profileAvatar: document.getElementById('profileAvatar'),
   sidebarAvatar: document.getElementById('sidebarAvatar'),
@@ -108,6 +124,67 @@ const els = {
   sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
   appShell: document.querySelector('.app-shell'),
 };
+
+function savePersistentState() {
+  const payload = {
+    rooms,
+    topics,
+    weeklyActivity,
+    state: {
+      roomTitle: state.room?.title,
+      theme: state.theme,
+      sidebarCollapsed: state.sidebarCollapsed,
+      settings: state.settings,
+    },
+    anonymousUser,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadPersistentState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed.rooms) && parsed.rooms.length) {
+      rooms.splice(0, rooms.length, ...parsed.rooms);
+    }
+    if (Array.isArray(parsed.topics) && parsed.topics.length) {
+      topics.splice(0, topics.length, ...parsed.topics);
+    }
+    if (Array.isArray(parsed.weeklyActivity) && parsed.weeklyActivity.length) {
+      weeklyActivity.splice(0, weeklyActivity.length, ...parsed.weeklyActivity);
+    }
+
+    if (parsed.state?.roomTitle) {
+      state.room = rooms.find((room) => room.title === parsed.state.roomTitle) ?? state.room;
+    }
+    if (parsed.state?.theme) {
+      state.theme = parsed.state.theme;
+    }
+    if (typeof parsed.state?.sidebarCollapsed === 'boolean') {
+      state.sidebarCollapsed = parsed.state.sidebarCollapsed;
+    }
+    if (parsed.state?.settings) {
+      state.settings = {
+        ...state.settings,
+        ...parsed.state.settings,
+      };
+    }
+
+    if (parsed.anonymousUser?.icon && parsed.anonymousUser?.name) {
+      anonymousUser.icon = parsed.anonymousUser.icon;
+      anonymousUser.name = parsed.anonymousUser.name;
+      anonymousUser.status = parsed.anonymousUser.status || anonymousUser.status;
+    }
+  } catch (_error) {
+    // Keep defaults if storage content is malformed.
+  }
+}
 
 function escapeHtml(value) {
   return String(value)
@@ -134,6 +211,7 @@ function setRoom(roomTitle) {
   rooms.forEach((room) => {
     room.selected = room.title === nextRoom.title;
   });
+  savePersistentState();
   render();
 }
 
@@ -145,13 +223,18 @@ function closeModal(modal) {
   modal.classList.add('hidden');
 }
 
-function applyTheme(theme) {
+function applyTheme(theme, options = {}) {
+  const { silent = false } = options;
   state.theme = theme;
   document.body.dataset.theme = theme;
   localStorage.setItem('vibehack-theme', theme);
   els.themeButtons.forEach((button) => {
     button.classList.toggle('active', button.dataset.theme === theme);
   });
+  savePersistentState();
+  if (!silent) {
+    showToast(`Switched to ${theme} mode`, 'info');
+  }
 }
 
 function applySidebarState() {
@@ -163,6 +246,7 @@ function applySidebarState() {
 function toggleSidebar() {
   state.sidebarCollapsed = !state.sidebarCollapsed;
   applySidebarState();
+  savePersistentState();
 }
 
 function matchesSearch(value) {
@@ -180,6 +264,40 @@ function getVisibleRooms() {
 function setTopicFilter(filter) {
   state.topicFilter = filter;
   render();
+}
+
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  els.toastStack.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2800);
+}
+
+function openRoomDrawer(room) {
+  const memberNames = Array.from({ length: 5 }, () => pickRandom(anonymousNames));
+  els.drawerRoomTitle.textContent = room.title;
+  els.drawerRoomMeta.textContent = `${room.category} · ${room.users} · ${room.status}`;
+  els.drawerRoomDescription.textContent = room.description;
+  els.drawerExpiry.textContent = room.selected ? '23h 12m left' : '22h 48m left';
+  els.drawerMembers.innerHTML = memberNames
+    .map(
+      (name, index) => `
+        <div class="drawer-member">
+          <span>${escapeHtml(name)}${index + 1}</span>
+          <span class="room-badge">${index < 2 ? 'Online' : 'Idle'}</span>
+        </div>
+      `,
+    )
+    .join('');
+  els.roomDrawerBackdrop.classList.remove('hidden');
+}
+
+function closeRoomDrawer() {
+  els.roomDrawerBackdrop.classList.add('hidden');
 }
 
 function syncSidebarRoom() {
@@ -407,6 +525,7 @@ function renderRooms() {
                 </div>
                 <div class="room-actions">
                   <button class="ghost-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Make active</button>
+                  <button class="ghost-button room-details" type="button" data-room="${escapeHtml(room.title)}">Details</button>
                   <button class="cta-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Join</button>
                 </div>
               </article>
@@ -422,6 +541,17 @@ function renderRooms() {
       const roomTitle = event.currentTarget.dataset.room;
       setRoom(roomTitle);
       setView('home');
+      showToast(`Active room set to ${roomTitle}`, 'success');
+    });
+  });
+
+  document.querySelectorAll('.room-details').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const roomTitle = event.currentTarget.dataset.room;
+      const room = rooms.find((entry) => entry.title === roomTitle);
+      if (room) {
+        openRoomDrawer(room);
+      }
     });
   });
 }
@@ -469,6 +599,20 @@ function renderProfile() {
             <p>See which contexts you joined most often and where you helped most.</p>
           </article>
         </div>
+        <div class="mini-chart-grid">
+          <article class="mini-chart">
+            <p class="label">Weekly points trend</p>
+            <div class="mini-chart-bars">
+              ${weeklyActivity.map((d) => `<span class="mini-chart-bar" style="height:${Math.max(10, d.messages)}px"></span>`).join('')}
+            </div>
+          </article>
+          <article class="mini-chart">
+            <p class="label">Trust trend</p>
+            <div class="mini-chart-bars">
+              ${weeklyActivity.map((d) => `<span class="mini-chart-bar" style="height:${Math.max(10, d.whispers * 8)}px"></span>`).join('')}
+            </div>
+          </article>
+        </div>
       </div>
       <div class="settings-list">
         <div class="settings-row">
@@ -476,21 +620,21 @@ function renderProfile() {
             <p class="label">Profile visibility</p>
             <strong>Anonymous by default</strong>
           </div>
-          <span class="toggle on"></span>
+          <button class="toggle ${state.settings.whisperRequests ? 'on' : ''}" data-setting="whisperRequests" aria-label="Toggle whisper requests"></button>
         </div>
         <div class="settings-row">
           <div>
             <p class="label">Temporary chats</p>
             <strong>Auto-delete after 24 hours</strong>
           </div>
-          <span class="toggle on"></span>
+          <button class="toggle ${state.settings.roomInvites ? 'on' : ''}" data-setting="roomInvites" aria-label="Toggle room invites"></button>
         </div>
         <div class="settings-row">
           <div>
             <p class="label">Reports</p>
             <strong>Quick moderation access</strong>
           </div>
-          <span class="toggle on"></span>
+          <button class="toggle ${state.settings.moderationAlerts ? 'on' : ''}" data-setting="moderationAlerts" aria-label="Toggle moderation alerts"></button>
         </div>
         <div class="timeline">
           <div class="timeline-row">
@@ -509,6 +653,16 @@ function renderProfile() {
       </div>
     </section>
   `;
+
+  document.querySelectorAll('.toggle[data-setting]').forEach((toggleButton) => {
+    toggleButton.addEventListener('click', () => {
+      const settingKey = toggleButton.dataset.setting;
+      state.settings[settingKey] = !state.settings[settingKey];
+      showToast('Setting updated', 'success');
+      savePersistentState();
+      renderProfile();
+    });
+  });
 }
 
 function renderSettings() {
@@ -530,25 +684,35 @@ function renderSettings() {
             <p class="label">Whisper requests</p>
             <strong>Allow from trusted users only</strong>
           </div>
-          <span class="toggle on"></span>
+          <button class="toggle ${state.settings.whisperRequests ? 'on' : ''}" data-setting="whisperRequests" aria-label="Toggle whisper requests"></button>
         </div>
         <div class="settings-row">
           <div>
             <p class="label">Room invites</p>
             <strong>Only from joined categories</strong>
           </div>
-          <span class="toggle on"></span>
+          <button class="toggle ${state.settings.roomInvites ? 'on' : ''}" data-setting="roomInvites" aria-label="Toggle room invites"></button>
         </div>
         <div class="settings-row">
           <div>
             <p class="label">Moderation alerts</p>
             <strong>Immediate warnings</strong>
           </div>
-          <span class="toggle on"></span>
+          <button class="toggle ${state.settings.moderationAlerts ? 'on' : ''}" data-setting="moderationAlerts" aria-label="Toggle moderation alerts"></button>
         </div>
       </div>
     </section>
   `;
+
+  document.querySelectorAll('.toggle[data-setting]').forEach((toggleButton) => {
+    toggleButton.addEventListener('click', () => {
+      const settingKey = toggleButton.dataset.setting;
+      state.settings[settingKey] = !state.settings[settingKey];
+      showToast('Setting updated', 'success');
+      savePersistentState();
+      renderSettings();
+    });
+  });
 }
 
 function hydrateAnonymousIdentity() {
@@ -565,6 +729,7 @@ function createRoomFromModal() {
   const vibe = els.roomVibeInput.value.trim();
 
   if (!title || !category) {
+    showToast('Room name and topic are required', 'warning');
     return;
   }
 
@@ -591,6 +756,8 @@ function createRoomFromModal() {
   els.roomTopicInput.value = '';
   els.roomVibeInput.value = '';
   closeModal(els.roomModal);
+  showToast('Room created successfully', 'success');
+  savePersistentState();
   setView('rooms');
 }
 
@@ -623,6 +790,7 @@ els.jumpToRoomBtn.addEventListener('click', () => setView('home'));
 els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
 els.confirmCreateRoomBtn.addEventListener('click', createRoomFromModal);
+els.closeRoomDrawerBtn.addEventListener('click', closeRoomDrawer);
 
 els.roomModal.addEventListener('click', (event) => {
   if (event.target === els.roomModal) {
@@ -636,7 +804,15 @@ els.profileModal.addEventListener('click', (event) => {
   }
 });
 
+els.roomDrawerBackdrop.addEventListener('click', (event) => {
+  if (event.target === els.roomDrawerBackdrop) {
+    closeRoomDrawer();
+  }
+});
+
+loadPersistentState();
 hydrateAnonymousIdentity();
-applyTheme(state.theme);
+applyTheme(state.theme, { silent: true });
 applySidebarState();
+savePersistentState();
 render();

@@ -185,6 +185,38 @@
       </div>
     </div>
 
+    <div class="drawer-backdrop hidden" id="roomDrawerBackdrop">
+      <aside class="room-drawer glass" id="roomDrawer" aria-label="Room details">
+        <button class="close-btn" id="closeRoomDrawerBtn" aria-label="Close room details">×</button>
+        <p class="eyebrow">Room details</p>
+        <h3 id="drawerRoomTitle">Room name</h3>
+        <p class="muted" id="drawerRoomMeta">Category · users · status</p>
+        <p id="drawerRoomDescription" class="muted"></p>
+
+        <section class="drawer-block glass-subtle">
+          <p class="label">Expiry timer</p>
+          <strong id="drawerExpiry">23h 12m left</strong>
+          <p class="muted">Room is deleted if no new activity before timer ends.</p>
+        </section>
+
+        <section class="drawer-block glass-subtle">
+          <p class="label">Active members</p>
+          <div id="drawerMembers" class="drawer-members"></div>
+        </section>
+
+        <section class="drawer-block glass-subtle">
+          <p class="label">Moderation</p>
+          <div class="profile-actions">
+            <button class="ghost-button" type="button">Mute room</button>
+            <button class="ghost-button" type="button">Report issue</button>
+            <button class="ghost-button danger" type="button">Leave room</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
     <script src="app.js"></script>
   </body>
 </html>

@@ -745,6 +745,124 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   background: rgba(255, 255, 255, 0.04);
 }
 
+.mini-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mini-chart {
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mini-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+  min-height: 70px;
+  margin-top: 10px;
+}
+
+.mini-chart-bar {
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 90%, white 10%), color-mix(in srgb, var(--accent-2) 70%, var(--accent) 30%));
+  min-height: 8px;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  justify-items: end;
+  background: rgba(8, 4, 12, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+.drawer-backdrop.hidden {
+  display: none;
+}
+
+.room-drawer {
+  position: relative;
+  height: 100%;
+  width: min(100%, 420px);
+  padding: 22px;
+  border-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+}
+
+.drawer-block {
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.drawer-members {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.drawer-member {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.toast-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 40;
+  display: grid;
+  gap: 10px;
+  max-width: min(92vw, 360px);
+}
+
+.toast {
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--panel) 88%, black 12%);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  animation: toastIn 0.22s ease;
+}
+
+.toast.success {
+  border-color: color-mix(in srgb, var(--accent-3) 35%, white 10%);
+}
+
+.toast.info {
+  border-color: color-mix(in srgb, var(--accent) 34%, white 8%);
+}
+
+.toast.warning {
+  border-color: color-mix(in srgb, var(--accent-2) 45%, white 10%);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -834,6 +952,7 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   .workspace { min-height: auto; }
   .topic-grid,
   .bubble-grid,
+  .mini-chart-grid,
   .modal-grid,
   .composer,
   .split-grid,
