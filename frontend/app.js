@@ -88,6 +88,22 @@ const defaultRoomMessages = {
 const roomMessages = {};
 
 const STORAGE_KEY = 'vibehack-ui-state-v1';
+const ONBOARDING_KEY = 'vibehack-onboarding-complete';
+
+const onboardingSteps = [
+  {
+    title: 'Welcome to VibeHack',
+    body: 'Anonymous, temporary rooms designed for low-pressure conversations and fast collaboration.',
+  },
+  {
+    title: 'Discover and Join',
+    body: 'Use Discover and Active Rooms to find a vibe, then hit Join to enter a real room interface.',
+  },
+  {
+    title: 'Stay Safe',
+    body: 'Use room moderation controls to mute or report. Actions stay in your local Safety history.',
+  },
+];
 
 const state = {
   view: 'home',
@@ -102,6 +118,19 @@ const state = {
     moderationAlerts: true,
   },
   chatDraft: '',
+  mutedRooms: {},
+  blockedUsers: {},
+  moderationHistory: [],
+  archivedRecaps: [],
+  onboardingStep: 0,
+  reportContextRoom: null,
+  drawerRoomTitle: null,
+  typingIndicatorRoom: null,
+  touchStartX: 0,
+  touchStartY: 0,
+  searchDebounceTimer: null,
+  walkthroughTimer: null,
+  viewTransitionTimer: null,
 };
 
 const els = {
@@ -129,6 +158,8 @@ const els = {
   drawerExpiry: document.getElementById('drawerExpiry'),
   drawerMembers: document.getElementById('drawerMembers'),
   toastStack: document.getElementById('toastStack'),
+  globalSearchInput: document.getElementById('globalSearchInput'),
+  clearSearchBtn: document.getElementById('clearSearchBtn'),
   profileName: document.getElementById('profileName'),
   profileAvatar: document.getElementById('profileAvatar'),
   sidebarAvatar: document.getElementById('sidebarAvatar'),
@@ -137,6 +168,22 @@ const els = {
   themeButtons: document.querySelectorAll('.theme-btn'),
   sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
   appShell: document.querySelector('.app-shell'),
+  muteRoomBtn: document.getElementById('muteRoomBtn'),
+  reportRoomBtn: document.getElementById('reportRoomBtn'),
+  leaveRoomBtn: document.getElementById('leaveRoomBtn'),
+  reportModal: document.getElementById('reportModal'),
+  closeReportModal: document.getElementById('closeReportModal'),
+  reportReasonInput: document.getElementById('reportReasonInput'),
+  reportDetailsInput: document.getElementById('reportDetailsInput'),
+  reportContextText: document.getElementById('reportContextText'),
+  submitReportBtn: document.getElementById('submitReportBtn'),
+  onboardingModal: document.getElementById('onboardingModal'),
+  onboardingTitle: document.getElementById('onboardingTitle'),
+  onboardingBody: document.getElementById('onboardingBody'),
+  onboardingPrevBtn: document.getElementById('onboardingPrevBtn'),
+  onboardingSkipBtn: document.getElementById('onboardingSkipBtn'),
+  onboardingNextBtn: document.getElementById('onboardingNextBtn'),
+  mobileNavLinks: document.querySelectorAll('.mobile-nav-link'),
 };
 
 function savePersistentState() {
@@ -150,6 +197,10 @@ function savePersistentState() {
       theme: state.theme,
       sidebarCollapsed: state.sidebarCollapsed,
       settings: state.settings,
+      mutedRooms: state.mutedRooms,
+      blockedUsers: state.blockedUsers,
+      moderationHistory: state.moderationHistory,
+      archivedRecaps: state.archivedRecaps,
     },
     anonymousUser,
   };
@@ -193,6 +244,18 @@ function loadPersistentState() {
         ...parsed.state.settings,
       };
     }
+    if (parsed.state?.mutedRooms && typeof parsed.state.mutedRooms === 'object') {
+      state.mutedRooms = parsed.state.mutedRooms;
+    }
+    if (parsed.state?.blockedUsers && typeof parsed.state.blockedUsers === 'object') {
+      state.blockedUsers = parsed.state.blockedUsers;
+    }
+    if (Array.isArray(parsed.state?.moderationHistory)) {
+      state.moderationHistory = parsed.state.moderationHistory;
+    }
+    if (Array.isArray(parsed.state?.archivedRecaps)) {
+      state.archivedRecaps = parsed.state.archivedRecaps;
+    }
 
     if (parsed.anonymousUser?.icon && parsed.anonymousUser?.name) {
       anonymousUser.icon = parsed.anonymousUser.icon;
@@ -216,9 +279,34 @@ function setView(view) {
   state.view = view;
   document.querySelectorAll('.nav-link').forEach((item) => {
     const isRoomsProxy = view === 'room' && item.dataset.view === 'rooms';
-    item.classList.toggle('active', item.dataset.view === view || isRoomsProxy);
+    const isActive = item.dataset.view === view || isRoomsProxy;
+    item.classList.toggle('active', isActive);
+    item.setAttribute('aria-current', isActive ? 'page' : 'false');
   });
-  render();
+  els.mobileNavLinks.forEach((item) => {
+    const isRoomsProxy = view === 'room' && item.dataset.view === 'rooms';
+    const isActive = item.dataset.view === view || isRoomsProxy;
+    item.classList.toggle('active', isActive);
+    item.setAttribute('aria-current', isActive ? 'page' : 'false');
+  });
+  renderLoadingState();
+  clearTimeout(state.viewTransitionTimer);
+  state.viewTransitionTimer = setTimeout(() => {
+    render();
+  }, 90);
+}
+
+function renderLoadingState() {
+  els.viewRoot.innerHTML = `
+    <section class="view-panel">
+      <div class="stats-grid">
+        <article class="stat-card skeleton"></article>
+        <article class="stat-card skeleton"></article>
+        <article class="stat-card skeleton"></article>
+        <article class="stat-card skeleton"></article>
+      </div>
+    </section>
+  `;
 }
 
 function setRoom(roomTitle) {
@@ -331,11 +419,17 @@ function openRoomDrawer(room) {
       `,
     )
     .join('');
+  state.drawerRoomTitle = room.title;
   els.roomDrawerBackdrop.classList.remove('hidden');
 }
 
 function closeRoomDrawer() {
+  state.drawerRoomTitle = null;
   els.roomDrawerBackdrop.classList.add('hidden');
+}
+
+function getDrawerRoom() {
+  return rooms.find((room) => room.title === state.drawerRoomTitle) || state.room;
 }
 
 function syncSidebarRoom() {
@@ -357,6 +451,107 @@ function getMonthlySummary() {
     },
     { messages: 0, rooms: 0, whispers: 0 },
   );
+}
+
+function getRoomCountdownText(room) {
+  ensureRoomExpiry(room);
+  const totalMinutes = Math.max(0, Math.round((room.expiresAt - Date.now()) / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+}
+
+function deterministicLifetimeMinutes(room) {
+  const source = `${room.title}|${room.category}`;
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = (hash << 5) - hash + source.charCodeAt(index);
+    hash |= 0;
+  }
+  return 90 + Math.abs(hash % 990);
+}
+
+function ensureRoomExpiry(room) {
+  if (!room.createdAt) {
+    room.createdAt = Date.now();
+  }
+  if (!room.expiresAt) {
+    const lifetimeMinutes = deterministicLifetimeMinutes(room);
+    room.expiresAt = room.createdAt + lifetimeMinutes * 60000;
+  }
+}
+
+function sweepExpiredRooms() {
+  const now = Date.now();
+  const survivors = [];
+  let archived = 0;
+
+  rooms.forEach((room) => {
+    ensureRoomExpiry(room);
+    if (room.expiresAt <= now) {
+      state.archivedRecaps.unshift(getRoomRecap(room));
+      archived += 1;
+    } else {
+      survivors.push(room);
+    }
+  });
+
+  if (!archived) {
+    return;
+  }
+
+  rooms.splice(0, rooms.length, ...survivors);
+  state.archivedRecaps = state.archivedRecaps.slice(0, 12);
+
+  if (!rooms.length) {
+    const fallbackRoom = {
+      title: 'Fresh lobby',
+      category: 'General',
+      users: '1/15',
+      status: 'Just now',
+      description: 'A newly initialized temporary room.',
+      selected: true,
+      createdAt: now,
+      expiresAt: now + 24 * 60 * 60000,
+    };
+    rooms.push(fallbackRoom);
+  }
+
+  if (!rooms.some((room) => room.title === state.room?.title)) {
+    state.room = rooms[0];
+  }
+
+  rooms.forEach((room) => {
+    room.selected = room.title === state.room.title;
+  });
+
+  logModerationAction('Rooms expired', `${archived} room(s) auto-archived`);
+  showToast(`${archived} expired room(s) moved to recap archive`, 'info');
+  savePersistentState();
+}
+
+function getRoomRecap(room) {
+  const messages = getRoomMessages(room.title);
+  return {
+    roomTitle: room.title,
+    category: room.category,
+    highlights: [
+      `${messages.length} total messages in sample`,
+      `${room.users} online at archive time`,
+      `Most recent vibe: ${room.description}`,
+    ],
+    archivedAt: new Date().toISOString(),
+  };
+}
+
+function logModerationAction(action, detail) {
+  state.moderationHistory.unshift({
+    action,
+    detail,
+    when: new Date().toISOString(),
+  });
+  state.moderationHistory = state.moderationHistory.slice(0, 20);
+  savePersistentState();
 }
 
 function getRoomMessages(roomTitle) {
@@ -461,6 +656,60 @@ function renderHome() {
           .join('')}
       </div>
     </section>
+
+    <section class="view-panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="label">Safety center</p>
+          <h3>Recent moderation activity</h3>
+        </div>
+      </div>
+      <div class="feed-grid">
+        ${
+          state.moderationHistory.length
+            ? state.moderationHistory
+                .slice(0, 4)
+                .map(
+                  (entry) => `
+                    <article class="feed-card">
+                      <h4>${escapeHtml(entry.action)}</h4>
+                      <p>${escapeHtml(entry.detail)}</p>
+                      <small>${escapeHtml(new Date(entry.when).toLocaleString())}</small>
+                    </article>
+                  `,
+                )
+                .join('')
+            : getEmptyStateMarkup('No moderation actions yet', 'Use room-level controls to report, mute, or leave. Safety history will appear here.')
+        }
+      </div>
+    </section>
+
+    <section class="view-panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="label">Archived recaps</p>
+          <h3>Expired room snapshots</h3>
+        </div>
+      </div>
+      <div class="feed-grid">
+        ${
+          state.archivedRecaps.length
+            ? state.archivedRecaps
+                .slice(0, 4)
+                .map(
+                  (recap) => `
+                    <article class="feed-card">
+                      <h4>${escapeHtml(recap.roomTitle)} · ${escapeHtml(recap.category)}</h4>
+                      <p>${escapeHtml(recap.highlights[0])}</p>
+                      <small>${escapeHtml(new Date(recap.archivedAt).toLocaleString())}</small>
+                    </article>
+                  `,
+                )
+                .join('')
+            : getEmptyStateMarkup('No archived recaps yet', 'When a room expires or you leave one, a lightweight recap will show here.')
+        }
+      </div>
+    </section>
   `;
 }
 
@@ -560,6 +809,10 @@ function renderDiscover() {
 function renderRoomInterface() {
   const activeRoom = state.room;
   const messages = getRoomMessages(activeRoom.title);
+  const visibleMessages = messages.filter((message) => !state.blockedUsers[message.author]);
+  const roomMuted = Boolean(state.mutedRooms[activeRoom.title]);
+  const countdown = getRoomCountdownText(activeRoom);
+  const isTypingHere = state.typingIndicatorRoom === activeRoom.title;
 
   els.pageTitle.textContent = activeRoom.title;
   els.pageSubtitle.textContent = 'Temporary room chat. Messages and context stay lightweight and private.';
@@ -574,7 +827,7 @@ function renderRoomInterface() {
           <div class="chat-meta">
             <span>${escapeHtml(activeRoom.category)}</span>
             <span>${escapeHtml(activeRoom.users)} online</span>
-            <span>Auto delete in ~24h</span>
+            <span>Auto delete in ${escapeHtml(countdown)}</span>
           </div>
         </div>
         <div class="profile-actions">
@@ -583,21 +836,29 @@ function renderRoomInterface() {
         </div>
       </div>
 
+      ${roomMuted ? '<div class="chat-muted-banner">This room is muted for you. You can still read history, but sending is disabled.</div>' : ''}
+
       <div class="message-feed">
-        ${messages
-          .map(
-            (message) => `
-              <article class="message-row ${message.me ? 'me' : ''}">
-                <strong>${escapeHtml(message.author)}</strong>
+        ${visibleMessages
+          .map((message, index) => {
+            const previous = visibleMessages[index - 1];
+            const grouped = Boolean(previous && previous.author === message.author);
+            return `
+              <article class="message-row ${message.me ? 'me' : ''} ${grouped ? 'grouped' : ''}">
+                <div class="message-row-head">
+                  ${grouped ? '<span></span>' : `<strong>${escapeHtml(message.author)}</strong>`}
+                  ${!message.me ? `<button class="tiny-button block-user-btn" data-user="${escapeHtml(message.author)}" type="button">Block</button>` : ''}
+                </div>
                 <p>${escapeHtml(message.body)}</p>
-                <small>${escapeHtml(message.time)}</small>
+                <small>${escapeHtml(message.time)}${message.me ? ' · Seen' : ''}</small>
               </article>
-            `,
-          )
+            `;
+          })
           .join('')}
+        ${isTypingHere ? '<article class="message-row"><small>Someone is typing...</small></article>' : ''}
       </div>
 
-      <form class="composer" id="roomComposerForm">
+      <form class="composer ${roomMuted ? 'disabled' : ''}" id="roomComposerForm">
         <input id="roomComposerInput" type="text" placeholder="Send something kind and helpful..." value="${escapeHtml(state.chatDraft)}" />
         <button class="cta-button" type="submit">Send</button>
       </form>
@@ -611,10 +872,15 @@ function renderRoomInterface() {
 
   roomComposerInput.addEventListener('input', (event) => {
     state.chatDraft = event.target.value;
+    state.typingIndicatorRoom = event.target.value.trim() ? activeRoom.title : null;
   });
 
   roomComposerForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (roomMuted) {
+      showToast('Room is muted. Unmute from room controls to send.', 'warning');
+      return;
+    }
     const nextMessage = roomComposerInput.value.trim();
     if (!nextMessage) {
       return;
@@ -625,9 +891,27 @@ function renderRoomInterface() {
       me: true,
       time: 'now',
     });
+    messages.push({
+      author: 'System',
+      body: `${anonymousUser.name} sent a new message`,
+      me: false,
+      time: 'just now',
+    });
     state.chatDraft = '';
+    state.typingIndicatorRoom = null;
     savePersistentState();
     renderRoomInterface();
+  });
+
+  document.querySelectorAll('.block-user-btn').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const userName = event.currentTarget.dataset.user;
+      state.blockedUsers[userName] = true;
+      logModerationAction('Blocked user', `${userName} in ${activeRoom.title}`);
+      showToast(`${userName} blocked locally`, 'warning');
+      savePersistentState();
+      renderRoomInterface();
+    });
   });
 
   roomDetailOpenBtn.addEventListener('click', () => openRoomDrawer(activeRoom));
@@ -658,23 +942,28 @@ function renderRooms() {
           filteredRooms.length
             ? filteredRooms
                 .map(
-                  (room) => `
-                    <article class="room-row ${room.selected ? 'selected' : ''}" data-room="${escapeHtml(room.title)}">
+                        (room) => {
+                          const minutesLeft = Math.max(0, Math.round((room.expiresAt - Date.now()) / 60000));
+                          const expiringSoon = minutesLeft <= 20;
+                          return `
+                          <article class="room-row ${room.selected ? 'selected' : ''} ${expiringSoon ? 'expiring' : ''}" data-room="${escapeHtml(room.title)}">
                       <div class="room-top">
                         <div>
                           <p class="label">${escapeHtml(room.category)}</p>
                           <h4>${escapeHtml(room.title)}</h4>
                           <p>${escapeHtml(room.description)}</p>
+                          <small>Expires in ${escapeHtml(getRoomCountdownText(room))}</small>
                         </div>
                         <span class="room-badge">${escapeHtml(room.users)}</span>
                       </div>
                       <div class="room-actions">
                         <button class="ghost-button room-activate" type="button" data-room="${escapeHtml(room.title)}">Make active</button>
                         <button class="ghost-button room-details" type="button" data-room="${escapeHtml(room.title)}">Details</button>
-                        <button class="cta-button room-join" type="button" data-room="${escapeHtml(room.title)}">Join</button>
+                              <button class="cta-button room-join" type="button" data-room="${escapeHtml(room.title)}">${expiringSoon ? 'Join fast' : 'Join'}</button>
                       </div>
                     </article>
-                  `,
+                        `;
+                        },
                 )
                 .join('')
             : getEmptyStateMarkup('No rooms match your filter', 'Reset your search or create a new room to continue.', 'Create room', 'roomsCreateRoomBtn')
@@ -700,6 +989,9 @@ function renderRooms() {
     button.addEventListener('click', (event) => {
       const roomTitle = event.currentTarget.dataset.room;
       setRoom(roomTitle);
+      const roomLog = getRoomMessages(roomTitle);
+      roomLog.push({ author: 'System', body: `${anonymousUser.name} joined the room`, me: false, time: 'now' });
+      savePersistentState();
       setView('room');
       showToast(`Entered ${roomTitle}`, 'success');
     });
@@ -773,6 +1065,18 @@ function renderProfile() {
             </div>
           </article>
         </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <p class="label">How points are earned</p>
+            <strong>Transparent scoring</strong>
+            <p>+4 for helpful messages, +8 for positive reports resolved, -10 for verified abuse reports.</p>
+          </article>
+          <article class="feature-card">
+            <p class="label">Reputation badge</p>
+            <strong>${state.moderationHistory.length > 8 ? 'Veteran' : 'Trusted'}</strong>
+            <p>Badge updates from consistency, safety behavior, and room participation quality.</p>
+          </article>
+        </div>
       </div>
       <div class="settings-list">
         <div class="settings-row">
@@ -797,18 +1101,27 @@ function renderProfile() {
           <button class="toggle ${state.settings.moderationAlerts ? 'on' : ''}" data-setting="moderationAlerts" aria-label="Toggle moderation alerts"></button>
         </div>
         <div class="timeline">
-          <div class="timeline-row">
-            <span>Today</span>
-            <strong>+24 points</strong>
-          </div>
-          <div class="timeline-row">
-            <span>This week</span>
-            <strong>3 rooms completed</strong>
-          </div>
-          <div class="timeline-row">
-            <span>Trust milestone</span>
-            <strong>Veteran maintained</strong>
-          </div>
+          ${(state.moderationHistory.length
+            ? state.moderationHistory.slice(0, 3).map((entry) => `
+              <div class="timeline-row">
+                <span>${escapeHtml(entry.action)}</span>
+                <strong>${escapeHtml(new Date(entry.when).toLocaleDateString())}</strong>
+              </div>
+            `).join('')
+            : `
+              <div class="timeline-row">
+                <span>Today</span>
+                <strong>+24 points</strong>
+              </div>
+              <div class="timeline-row">
+                <span>This week</span>
+                <strong>3 rooms completed</strong>
+              </div>
+              <div class="timeline-row">
+                <span>Trust milestone</span>
+                <strong>Veteran maintained</strong>
+              </div>
+            `)}
         </div>
       </div>
     </section>
@@ -867,6 +1180,44 @@ function renderSettings() {
           </div>
           <button class="ghost-button danger" id="resetStateBtn" type="button">Reset</button>
         </div>
+        <div class="settings-row">
+          <div>
+            <p class="label">Seed sample activity</p>
+            <strong>Generate extra rooms and chat context for demos</strong>
+          </div>
+          <button class="ghost-button" id="seedDemoBtn" type="button">Seed</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <p class="label">Scripted walkthrough</p>
+            <strong>Auto-cycle through views for judge presentations</strong>
+          </div>
+          <button class="ghost-button" id="walkthroughBtn" type="button">Run</button>
+        </div>
+      </div>
+
+      <div class="panel-head compact" style="margin-top: 14px;">
+        <div>
+          <p class="label">Safety center</p>
+          <h3>Moderation history</h3>
+        </div>
+      </div>
+      <div class="feed-grid">
+        ${
+          state.moderationHistory.length
+            ? state.moderationHistory
+                .map(
+                  (entry) => `
+                    <article class="feed-card">
+                      <h4>${escapeHtml(entry.action)}</h4>
+                      <p>${escapeHtml(entry.detail)}</p>
+                      <small>${escapeHtml(new Date(entry.when).toLocaleString())}</small>
+                    </article>
+                  `,
+                )
+                .join('')
+            : getEmptyStateMarkup('No moderation events', 'Report or mute actions will appear here for quick review.')
+        }
       </div>
     </section>
   `;
@@ -882,9 +1233,21 @@ function renderSettings() {
   });
 
   const resetStateBtn = document.getElementById('resetStateBtn');
+  const seedDemoBtn = document.getElementById('seedDemoBtn');
+  const walkthroughBtn = document.getElementById('walkthroughBtn');
   if (resetStateBtn) {
     resetStateBtn.addEventListener('click', () => {
       resetAppState();
+    });
+  }
+  if (seedDemoBtn) {
+    seedDemoBtn.addEventListener('click', () => {
+      seedDemoActivity();
+    });
+  }
+  if (walkthroughBtn) {
+    walkthroughBtn.addEventListener('click', () => {
+      startWalkthroughMode();
     });
   }
 }
@@ -914,6 +1277,8 @@ function createRoomFromModal() {
     status: 'Just now',
     description: vibe ? `Room vibe: ${vibe}` : 'Newly created temporary room.',
     selected: false,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60000,
   });
 
   const topicExists = topics.some((topic) => topic.name.toLowerCase() === category.toLowerCase());
@@ -935,7 +1300,109 @@ function createRoomFromModal() {
   setView('rooms');
 }
 
+function openReportModal(room) {
+  state.reportContextRoom = room;
+  els.reportContextText.textContent = `Reporting activity in ${room.title}. Your identity remains anonymous.`;
+  openModal(els.reportModal);
+}
+
+function submitReport() {
+  const room = state.reportContextRoom || state.room;
+  const reason = els.reportReasonInput.value;
+  const details = els.reportDetailsInput.value.trim();
+  const detailText = details ? `${reason}: ${details}` : reason;
+  logModerationAction('Submitted report', `${room.title} · ${detailText}`);
+  closeModal(els.reportModal);
+  els.reportDetailsInput.value = '';
+  showToast('Report submitted. Thanks for helping keep rooms safe.', 'success');
+}
+
+function seedDemoActivity() {
+  const now = Date.now();
+  const demoRoom = {
+    title: `Demo room ${Math.floor(Math.random() * 90 + 10)}`,
+    category: pickRandom(['Design', 'Building', 'Study', 'Music']),
+    users: `${Math.floor(Math.random() * 8 + 3)}/15`,
+    status: 'Just now',
+    description: 'Auto-seeded demo conversation room.',
+    selected: false,
+    createdAt: now,
+    expiresAt: now + (60 + Math.floor(Math.random() * 600)) * 60000,
+  };
+
+  rooms.unshift(demoRoom);
+  const messages = getRoomMessages(demoRoom.title);
+  messages.push({ author: 'System', body: 'Demo activity seeded for judge walkthrough.', me: false, time: 'now' });
+  logModerationAction('Seeded demo', `Created ${demoRoom.title}`);
+  showToast('Sample activity seeded', 'success');
+  savePersistentState();
+  render();
+}
+
+function startWalkthroughMode() {
+  if (state.walkthroughTimer) {
+    clearInterval(state.walkthroughTimer);
+    state.walkthroughTimer = null;
+    showToast('Walkthrough stopped', 'info');
+    return;
+  }
+
+  const sequence = ['home', 'discover', 'rooms', 'room', 'profile', 'settings'];
+  let index = 0;
+  showToast('Walkthrough started', 'info');
+  state.walkthroughTimer = setInterval(() => {
+    const view = sequence[index % sequence.length];
+    if (view === 'room') {
+      setView('room');
+    } else {
+      setView(view);
+    }
+    index += 1;
+    if (index >= sequence.length) {
+      clearInterval(state.walkthroughTimer);
+      state.walkthroughTimer = null;
+      showToast('Walkthrough complete', 'success');
+    }
+  }, 1400);
+}
+
+function advanceOnboarding(stepDelta) {
+  state.onboardingStep += stepDelta;
+  if (state.onboardingStep < 0) {
+    state.onboardingStep = 0;
+  }
+
+  if (state.onboardingStep >= onboardingSteps.length) {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    closeModal(els.onboardingModal);
+    showToast('You are all set. Explore and join a room.', 'success');
+    return;
+  }
+
+  const step = onboardingSteps[state.onboardingStep];
+  els.onboardingTitle.textContent = step.title;
+  els.onboardingBody.textContent = step.body;
+  els.onboardingPrevBtn.disabled = state.onboardingStep === 0;
+  els.onboardingNextBtn.textContent = state.onboardingStep === onboardingSteps.length - 1 ? 'Finish' : 'Next';
+}
+
+function ensureOnboarding() {
+  const completed = localStorage.getItem(ONBOARDING_KEY) === 'true';
+  if (completed) {
+    return;
+  }
+  state.onboardingStep = 0;
+  advanceOnboarding(0);
+  openModal(els.onboardingModal);
+}
+
 function render() {
+  sweepExpiredRooms();
+
+  if (els.globalSearchInput.value !== state.search) {
+    els.globalSearchInput.value = state.search;
+  }
+
   if (state.view === 'home') {
     renderHome();
   } else if (state.view === 'room') {
@@ -955,11 +1422,27 @@ document.querySelectorAll('.nav-link').forEach((button) => {
   button.addEventListener('click', () => setView(button.dataset.view));
 });
 
+els.mobileNavLinks.forEach((button) => {
+  button.addEventListener('click', () => setView(button.dataset.view));
+});
+
 els.themeButtons.forEach((button) => {
   button.addEventListener('click', () => applyTheme(button.dataset.theme));
 });
 
 els.sidebarToggleBtn.addEventListener('click', toggleSidebar);
+els.globalSearchInput.addEventListener('input', (event) => {
+  clearTimeout(state.searchDebounceTimer);
+  state.searchDebounceTimer = setTimeout(() => {
+    state.search = event.target.value;
+    render();
+  }, 150);
+});
+els.clearSearchBtn.addEventListener('click', () => {
+  state.search = '';
+  els.globalSearchInput.value = '';
+  render();
+});
 
 els.createRoomBtn.addEventListener('click', () => openModal(els.roomModal));
 els.jumpToRoomBtn.addEventListener('click', () => setView('room'));
@@ -967,6 +1450,60 @@ els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
 els.confirmCreateRoomBtn.addEventListener('click', createRoomFromModal);
 els.closeRoomDrawerBtn.addEventListener('click', closeRoomDrawer);
+els.closeReportModal.addEventListener('click', () => closeModal(els.reportModal));
+els.submitReportBtn.addEventListener('click', submitReport);
+
+els.muteRoomBtn.addEventListener('click', () => {
+  const roomTitle = getDrawerRoom().title;
+  state.mutedRooms[roomTitle] = !state.mutedRooms[roomTitle];
+  const isMuted = state.mutedRooms[roomTitle];
+  logModerationAction(isMuted ? 'Muted room' : 'Unmuted room', roomTitle);
+  showToast(isMuted ? `${roomTitle} muted` : `${roomTitle} unmuted`, isMuted ? 'warning' : 'success');
+  savePersistentState();
+  renderRoomInterface();
+});
+
+els.reportRoomBtn.addEventListener('click', () => openReportModal(getDrawerRoom()));
+els.leaveRoomBtn.addEventListener('click', () => {
+  const room = getDrawerRoom();
+  const recap = getRoomRecap(room);
+  state.archivedRecaps.unshift(recap);
+  state.archivedRecaps = state.archivedRecaps.slice(0, 12);
+  logModerationAction('Left room', `${room.title} moved to recap archive`);
+  showToast(`Left ${room.title}. Recap saved in Home.`, 'info');
+
+  const roomIndex = rooms.findIndex((entry) => entry.title === room.title);
+  if (roomIndex >= 0) {
+    rooms.splice(roomIndex, 1);
+  }
+  if (!rooms.length) {
+    const now = Date.now();
+    rooms.push({
+      title: 'Fresh lobby',
+      category: 'General',
+      users: '1/15',
+      status: 'Just now',
+      description: 'A newly initialized temporary room.',
+      selected: true,
+      createdAt: now,
+      expiresAt: now + 24 * 60 * 60000,
+    });
+  }
+  if (state.room.title === room.title) {
+    state.room = rooms[0];
+  }
+  savePersistentState();
+  closeRoomDrawer();
+  setView('rooms');
+});
+
+els.onboardingPrevBtn.addEventListener('click', () => advanceOnboarding(-1));
+els.onboardingNextBtn.addEventListener('click', () => advanceOnboarding(1));
+els.onboardingSkipBtn.addEventListener('click', () => {
+  localStorage.setItem(ONBOARDING_KEY, 'true');
+  closeModal(els.onboardingModal);
+  showToast('Onboarding skipped. You can explore directly.', 'info');
+});
 
 els.roomModal.addEventListener('click', (event) => {
   if (event.target === els.roomModal) {
@@ -986,9 +1523,45 @@ els.roomDrawerBackdrop.addEventListener('click', (event) => {
   }
 });
 
+els.reportModal.addEventListener('click', (event) => {
+  if (event.target === els.reportModal) {
+    closeModal(els.reportModal);
+  }
+});
+
+els.viewRoot.addEventListener('touchstart', (event) => {
+  const touch = event.changedTouches[0];
+  state.touchStartX = touch.clientX;
+  state.touchStartY = touch.clientY;
+});
+
+els.viewRoot.addEventListener('touchend', (event) => {
+  const touch = event.changedTouches[0];
+  const dx = touch.clientX - state.touchStartX;
+  const dy = touch.clientY - state.touchStartY;
+  if (Math.abs(dx) < 44 || Math.abs(dx) < Math.abs(dy)) {
+    return;
+  }
+
+  const flow = ['discover', 'rooms', 'profile'];
+  const current = state.view === 'room' ? 'rooms' : state.view;
+  const index = flow.indexOf(current);
+  if (index === -1) {
+    return;
+  }
+
+  if (dx < 0 && index < flow.length - 1) {
+    setView(flow[index + 1]);
+  }
+  if (dx > 0 && index > 0) {
+    setView(flow[index - 1]);
+  }
+});
+
 loadPersistentState();
 hydrateAnonymousIdentity();
 applyTheme(state.theme, { silent: true });
 applySidebarState();
 savePersistentState();
 render();
+ensureOnboarding();

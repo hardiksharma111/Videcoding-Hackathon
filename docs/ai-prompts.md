@@ -30,6 +30,7 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Add the next UX maturity layer with persistent local state, profile mini charts, room detail drawer interactions, and toast feedback without breaking the privacy-first temporary-chat vision.
 - Execute one full pass of QA polish/docs upgrades and set up deployment so the frontend can be published online right after implementation.
 - Remove workflow-based deployment setup and fix Join behavior so entering a room opens an actual room chat interface instead of only switching active room state.
+- Implement the full remaining frontend backlog sequentially: deeper room chat UX, live search/filter controls, room lifecycle expiry/recap states, moderation flow with safety history, onboarding tour, mobile navigation/swipe behavior, accessibility/performance improvements, and demo seeding/walkthrough tools.
 
 ## Notes
 

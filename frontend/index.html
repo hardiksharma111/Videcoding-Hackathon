@@ -120,6 +120,10 @@
             <h2 id="pageTitle">Home</h2>
             <p id="pageSubtitle">Your active chat sits front and center.</p>
           </div>
+          <div class="workspace-tools">
+            <input id="globalSearchInput" type="search" placeholder="Search rooms, topics, and vibes..." aria-label="Search" />
+            <button class="ghost-button" id="clearSearchBtn" type="button">Clear</button>
+          </div>
         </header>
 
         <section id="viewRoot" class="view-root"></section>
@@ -207,15 +211,64 @@
         <section class="drawer-block glass-subtle">
           <p class="label">Moderation</p>
           <div class="profile-actions">
-            <button class="ghost-button" type="button">Mute room</button>
-            <button class="ghost-button" type="button">Report issue</button>
-            <button class="ghost-button danger" type="button">Leave room</button>
+            <button class="ghost-button" id="muteRoomBtn" type="button">Mute room</button>
+            <button class="ghost-button" id="reportRoomBtn" type="button">Report issue</button>
+            <button class="ghost-button danger" id="leaveRoomBtn" type="button">Leave room</button>
           </div>
         </section>
       </aside>
     </div>
 
+    <div class="modal-backdrop hidden" id="reportModal">
+      <div class="modal glass">
+        <button class="close-btn" id="closeReportModal" aria-label="Close report dialog">×</button>
+        <p class="eyebrow">Report issue</p>
+        <h3>Flag behavior in this room</h3>
+        <p class="muted" id="reportContextText">Report keeps your identity anonymous.</p>
+        <div class="modal-grid single">
+          <label>
+            <span>Reason</span>
+            <select id="reportReasonInput" class="select-field">
+              <option value="Harassment">Harassment</option>
+              <option value="Spam">Spam</option>
+              <option value="Hate Speech">Hate Speech</option>
+              <option value="Self-harm Risk">Self-harm Risk</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+        </div>
+        <div class="modal-grid single">
+          <label>
+            <span>Details (optional)</span>
+            <input id="reportDetailsInput" type="text" placeholder="Add context for moderators" />
+          </label>
+        </div>
+        <button class="cta-button full-width" id="submitReportBtn" type="button">Submit report</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="onboardingModal">
+      <div class="modal glass">
+        <p class="eyebrow">Quick start</p>
+        <h3 id="onboardingTitle">Welcome to VibeHack</h3>
+        <p class="muted" id="onboardingBody">Anonymous, temporary rooms designed for low-pressure conversations.</p>
+        <div class="profile-actions">
+          <button class="ghost-button" id="onboardingPrevBtn" type="button">Back</button>
+          <button class="ghost-button" id="onboardingSkipBtn" type="button">Skip</button>
+          <button class="cta-button" id="onboardingNextBtn" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+    <nav class="mobile-bottom-nav glass" aria-label="Mobile navigation">
+      <button class="mobile-nav-link active" data-view="home" type="button">Home</button>
+      <button class="mobile-nav-link" data-view="discover" type="button">Discover</button>
+      <button class="mobile-nav-link" data-view="rooms" type="button">Rooms</button>
+      <button class="mobile-nav-link" data-view="profile" type="button">Profile</button>
+      <button class="mobile-nav-link" data-view="settings" type="button">Settings</button>
+    </nav>
 
     <script src="app.js"></script>
   </body>
