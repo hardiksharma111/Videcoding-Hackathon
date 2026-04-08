@@ -19,7 +19,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     
     try:
         # Decode the token to find the username
-        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+        secret_key = os.getenv("SECRET_KEY", "fallback-secret-for-local-dev-only")
+        algorithm = os.getenv("ALGORITHM", "HS256")
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception

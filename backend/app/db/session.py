@@ -1,11 +1,19 @@
 from sqlmodel import create_engine, Session, SQLModel
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
 
-sqlite_url = os.getenv("DATABASE_URL")
-engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+    load_dotenv()
+except Exception:
+    pass
+
+database_url = os.getenv("DATABASE_URL", "sqlite:///./vibehack.db")
+
+if database_url.startswith("sqlite"):
+    engine = create_engine(database_url, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(database_url, pool_pre_ping=True)
 
 def init_db():
     SQLModel.metadata.create_all(engine)
