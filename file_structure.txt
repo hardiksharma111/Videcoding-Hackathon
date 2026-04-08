@@ -1,0 +1,27 @@
+vibehacvibehack/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py              # Entry point: Initializes FastAPI & Socket.io
+│   │   ├── api/                 # REST Endpoints (The "Slow" Data)
+│   │   │   ├── auth.py          # Login, Registration, JWT
+│   │   │   ├── users.py         # Permanent Bio & Dashboard
+│   │   │   └── rooms.py         # Trending room list fetching
+│   │   ├── core/                # System config
+│   │   │   ├── config.py        # Pydantic Settings (.env loader)
+│   │   │   └── security.py      # Password hashing & JWT tokens
+│   │   ├── db/                  # Persistent Data (PostgreSQL)
+│   │   │   ├── session.py       # Engine & DB Connection
+│   │   │   └── models.py        # SQLAlchemy Tables (Users, AuthPoints)
+│   │   ├── redis_cache/         # Ephemeral State (The "Ghost" Logic)
+│   │   │   ├── connection.py    # Redis setup
+│   │   │   └── manager.py       # Room counts, Trending sorting logic
+│   │   ├── sockets/             # Real-time Engine (WebSockets)
+│   │   │   ├── connection.py    # On_Connect/On_Disconnect (Vanish logic)
+│   │   │   └── chat.py          # Messaging & Whispering handlers
+│   │   └── utils/               # Helpers
+│   │       └── identity.py      # Ghost name & Random PFP generator
+│   ├── .env                     # Secrets (DATABASE_URL, REDIS_URL)
+│   ├── docker-compose.yml       # Spins up Postgres & Redis in one click
+│   └── requirements.txt         # Your dependencies
+└── frontend/                    # Your friend's workspace (React/Next.js)
