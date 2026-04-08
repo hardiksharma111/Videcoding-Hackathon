@@ -22,6 +22,10 @@ Build a privacy-first social platform for spontaneous, low-pressure communicatio
 
 The project is intentionally frontend-only for now. Keep UI, routing, state, and design work inside `frontend/` so the backend can stay isolated for later collaboration.
 
+## Run It
+
+Open `frontend/index.html` in a browser to review the current prototype.
+
 ## Notes
 
 The hackathon reference files are intentionally ignored locally so the repo stays clean:
