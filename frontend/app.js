@@ -63,6 +63,7 @@ const state = {
   search: '',
   topicFilter: 'all',
   theme: localStorage.getItem('vibehack-theme') || 'night',
+  sidebarCollapsed: false,
 };
 
 const els = {
@@ -84,6 +85,8 @@ const els = {
   closeProfileBtn: document.getElementById('closeProfileBtn'),
   profileName: document.getElementById('profileName'),
   themeButtons: document.querySelectorAll('.theme-btn'),
+  sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
+  appShell: document.querySelector('.app-shell'),
 };
 
 function escapeHtml(value) {
@@ -129,6 +132,16 @@ function applyTheme(theme) {
   els.themeButtons.forEach((button) => {
     button.classList.toggle('active', button.dataset.theme === theme);
   });
+}
+
+function applySidebarState() {
+  els.appShell.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
+  els.sidebarToggleBtn.textContent = state.sidebarCollapsed ? '☰' : '☷';
+}
+
+function toggleSidebar() {
+  state.sidebarCollapsed = !state.sidebarCollapsed;
+  applySidebarState();
 }
 
 function matchesSearch(value) {
@@ -229,7 +242,7 @@ function renderDiscover() {
       <div class="panel-head">
         <div>
           <p class="label">Context feeds</p>
-          <h3>Topic streams</h3>
+          <h3>Topic streams (choose a category)</h3>
         </div>
         <span class="tier-pill">${filteredTopics.length} topics</span>
       </div>
@@ -293,8 +306,8 @@ function renderRooms() {
     return haystack.includes(state.search.trim().toLowerCase());
   });
 
-  els.pageTitle.textContent = 'Rooms';
-  els.pageSubtitle.textContent = 'Browse temporary chatrooms and move your active room when needed.';
+  els.pageTitle.textContent = 'Active Rooms';
+  els.pageSubtitle.textContent = 'Browse your temporary chatrooms and set the active room quickly.';
   els.rightRail.style.display = '';
   els.railRoomTitle.textContent = 'Room directory';
   els.railRoomText.textContent = 'Each room supports anonymous chat with a 15 person limit.';
@@ -345,14 +358,14 @@ function renderRooms() {
 
 function renderProfile() {
   els.pageTitle.textContent = 'Profile';
-  els.pageSubtitle.textContent = 'Anonymous identity, points, and safety settings.';
+  els.pageSubtitle.textContent = 'Identity controls, trust growth, and safety tools in one place.';
   els.rightRail.style.display = '';
   els.railRoomTitle.textContent = 'Profile';
   els.railRoomText.textContent = 'Other users only see avatar, username, and status.';
   syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
-    <section class="view-panel split-grid">
+    <section class="view-panel profile-layout">
       <div class="profile-kpi">
         <div class="kpi-top">
           <div>
@@ -366,6 +379,28 @@ function renderProfile() {
           <div><span>Anonymity points</span><strong>742</strong></div>
           <div><span>Rooms joined</span><strong>18</strong></div>
           <div><span>Trust score</span><strong>96%</strong></div>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <p class="label">Whispers</p>
+            <strong>Private inbox</strong>
+            <p>Receive anonymous one-to-one notes without exposing profile details.</p>
+          </article>
+          <article class="feature-card">
+            <p class="label">Safety shield</p>
+            <strong>Quick moderation</strong>
+            <p>Report, mute, and block controls are available directly inside room cards.</p>
+          </article>
+          <article class="feature-card">
+            <p class="label">Point streak</p>
+            <strong>7 day activity</strong>
+            <p>Gain trust points by positive participation in temporary rooms.</p>
+          </article>
+          <article class="feature-card">
+            <p class="label">Room recap</p>
+            <strong>Weekly summary</strong>
+            <p>See which contexts you joined most often and where you helped most.</p>
+          </article>
         </div>
       </div>
       <div class="settings-list">
@@ -389,6 +424,20 @@ function renderProfile() {
             <strong>Quick moderation access</strong>
           </div>
           <span class="toggle on"></span>
+        </div>
+        <div class="timeline">
+          <div class="timeline-row">
+            <span>Today</span>
+            <strong>+24 points</strong>
+          </div>
+          <div class="timeline-row">
+            <span>This week</span>
+            <strong>3 rooms completed</strong>
+          </div>
+          <div class="timeline-row">
+            <span>Trust milestone</span>
+            <strong>Veteran maintained</strong>
+          </div>
         </div>
       </div>
     </section>
@@ -415,6 +464,8 @@ els.themeButtons.forEach((button) => {
   button.addEventListener('click', () => applyTheme(button.dataset.theme));
 });
 
+els.sidebarToggleBtn.addEventListener('click', toggleSidebar);
+
 els.searchInput.addEventListener('input', (event) => {
   state.search = event.target.value;
   render();
@@ -440,4 +491,5 @@ els.profileModal.addEventListener('click', (event) => {
 
 els.profileName.textContent = 'User436';
 applyTheme(state.theme);
+applySidebarState();
 render();
