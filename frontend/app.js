@@ -131,9 +131,23 @@ const state = {
   searchDebounceTimer: null,
   walkthroughTimer: null,
   viewTransitionTimer: null,
+  authMode: 'login',
 };
 
 const els = {
+  authGate: document.getElementById('authGate'),
+  appShellRoot: document.getElementById('appShellRoot'),
+  authModeLoginBtn: document.getElementById('authModeLoginBtn'),
+  authModeSignupBtn: document.getElementById('authModeSignupBtn'),
+  authNameFieldWrap: document.getElementById('authNameFieldWrap'),
+  authNameInput: document.getElementById('authNameInput'),
+  authEmailInput: document.getElementById('authEmailInput'),
+  authPasswordInput: document.getElementById('authPasswordInput'),
+  authSwitchHint: document.getElementById('authSwitchHint'),
+  authErrorText: document.getElementById('authErrorText'),
+  authSubmitBtn: document.getElementById('authSubmitBtn'),
+  authGuestBtn: document.getElementById('authGuestBtn'),
+  logoutBtn: document.getElementById('logoutBtn'),
   viewRoot: document.getElementById('viewRoot'),
   pageTitle: document.getElementById('pageTitle'),
   pageSubtitle: document.getElementById('pageSubtitle'),
@@ -328,6 +342,86 @@ function openModal(modal) {
 
 function closeModal(modal) {
   modal.classList.add('hidden');
+}
+
+function setAuthError(message = '') {
+  if (!message) {
+    els.authErrorText.style.display = 'none';
+    els.authErrorText.textContent = '';
+    return;
+  }
+  els.authErrorText.style.display = 'block';
+  els.authErrorText.textContent = message;
+}
+
+function setAuthMode(mode) {
+  state.authMode = mode;
+  const isSignup = mode === 'signup';
+  els.authModeLoginBtn.classList.toggle('active', !isSignup);
+  els.authModeSignupBtn.classList.toggle('active', isSignup);
+  els.authNameFieldWrap.style.display = isSignup ? 'grid' : 'none';
+  els.authSubmitBtn.textContent = isSignup ? 'Create account' : 'Login';
+  els.authSwitchHint.textContent = isSignup
+    ? 'Already have an account? Switch to Login.'
+    : 'New here? Switch to Sign up.';
+  setAuthError('');
+}
+
+function showAppShell() {
+  els.authGate.classList.add('hidden');
+  els.appShellRoot.classList.remove('hidden');
+}
+
+function showAuthGate() {
+  els.appShellRoot.classList.add('hidden');
+  els.authGate.classList.remove('hidden');
+}
+
+function handleAuthSubmit() {
+  const name = els.authNameInput.value.trim();
+  const email = els.authEmailInput.value.trim();
+  const password = els.authPasswordInput.value;
+
+  if (state.authMode === 'signup') {
+    const result = window.AuthUtils.signup({ name, email, password });
+    if (!result.ok) {
+      setAuthError(result.error);
+      return;
+    }
+    showToast('Account created. Welcome to VibeHack.', 'success');
+  } else {
+    const result = window.AuthUtils.login({ email, password });
+    if (!result.ok) {
+      setAuthError(result.error);
+      return;
+    }
+    showToast('Login successful.', 'success');
+  }
+
+  setAuthError('');
+  els.authPasswordInput.value = '';
+  hydrateAnonymousIdentity();
+  showAppShell();
+  render();
+  ensureOnboarding();
+}
+
+function continueAsGuest() {
+  const guestSession = window.AuthUtils.loginAsGuest();
+  els.authNameInput.value = guestSession.name;
+  els.authEmailInput.value = guestSession.email;
+  els.authPasswordInput.value = '';
+  showToast('Continuing as guest', 'info');
+  hydrateAnonymousIdentity();
+  showAppShell();
+  render();
+  ensureOnboarding();
+}
+
+function logout() {
+  window.AuthUtils.logout();
+  showToast('Logged out', 'info');
+  showAuthGate();
 }
 
 function applyTheme(theme, options = {}) {
@@ -1505,6 +1599,12 @@ els.onboardingSkipBtn.addEventListener('click', () => {
   showToast('Onboarding skipped. You can explore directly.', 'info');
 });
 
+els.authModeLoginBtn.addEventListener('click', () => setAuthMode('login'));
+els.authModeSignupBtn.addEventListener('click', () => setAuthMode('signup'));
+els.authSubmitBtn.addEventListener('click', handleAuthSubmit);
+els.authGuestBtn.addEventListener('click', continueAsGuest);
+els.logoutBtn.addEventListener('click', logout);
+
 els.roomModal.addEventListener('click', (event) => {
   if (event.target === els.roomModal) {
     closeModal(els.roomModal);
@@ -1563,5 +1663,12 @@ hydrateAnonymousIdentity();
 applyTheme(state.theme, { silent: true });
 applySidebarState();
 savePersistentState();
-render();
-ensureOnboarding();
+setAuthMode('login');
+
+if (window.AuthUtils.getSession()) {
+  showAppShell();
+  render();
+  ensureOnboarding();
+} else {
+  showAuthGate();
+}

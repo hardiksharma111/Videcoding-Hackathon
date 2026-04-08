@@ -20,7 +20,49 @@
     <div class="ambient ambient-a"></div>
     <div class="ambient ambient-b"></div>
 
-    <div class="app-shell">
+    <section class="auth-gate" id="authGate">
+      <div class="auth-card glass">
+        <p class="eyebrow">Welcome to VibeHack</p>
+        <h2>Login or create account</h2>
+        <p class="muted">Your identity inside rooms is still anonymous. This account just secures your session.</p>
+
+        <div class="auth-mode-row">
+          <button class="ghost-button active" id="authModeLoginBtn" type="button">Login</button>
+          <button class="ghost-button" id="authModeSignupBtn" type="button">Sign up</button>
+        </div>
+
+        <div class="modal-grid single" id="authNameFieldWrap" style="display:none;">
+          <label>
+            <span>Name</span>
+            <input id="authNameInput" type="text" placeholder="Your display name" />
+          </label>
+        </div>
+
+        <div class="modal-grid single">
+          <label>
+            <span>Email</span>
+            <input id="authEmailInput" type="email" placeholder="you@example.com" />
+          </label>
+        </div>
+
+        <div class="modal-grid single">
+          <label>
+            <span>Password</span>
+            <input id="authPasswordInput" type="password" placeholder="Minimum 8 characters" />
+          </label>
+        </div>
+
+        <p class="muted" id="authSwitchHint">New here? Switch to Sign up.</p>
+        <p class="danger" id="authErrorText" style="display:none;"></p>
+
+        <div class="profile-actions">
+          <button class="cta-button" id="authSubmitBtn" type="button">Login</button>
+          <button class="ghost-button" id="authGuestBtn" type="button">Continue as guest</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="app-shell hidden" id="appShellRoot">
       <aside class="left-rail glass">
         <div class="brand-row">
           <div class="brand-mark">V</div>
@@ -40,6 +82,7 @@
               <p class="muted" id="sidebarStatusText">Online · Veteran tier</p>
             </div>
           </div>
+          <button class="ghost-button small" id="logoutBtn" type="button">Logout</button>
           <div class="meter">
             <span style="width: 78%"></span>
           </div>
@@ -270,6 +313,7 @@
       <button class="mobile-nav-link" data-view="settings" type="button">Settings</button>
     </nav>
 
+    <script src="auth-utils.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

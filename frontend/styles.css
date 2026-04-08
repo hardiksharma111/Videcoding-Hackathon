@@ -120,6 +120,38 @@ input:focus {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.hidden {
+  display: none !important;
+}
+
+.auth-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.auth-card {
+  width: min(100%, 560px);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.auth-mode-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.auth-mode-row .ghost-button.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
 .app-shell {
   position: relative;
   z-index: 1;
