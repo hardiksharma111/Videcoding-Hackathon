@@ -13,6 +13,7 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Evolve the prototype into a richer product shell with active chat, temporary rooms, topic feeds, and profile visibility controls.
 - Add a trust ladder / anonymity points surface and a judge-friendly interactive layout.
 - Keep the design glassy, bubbly, and clearly separated from backend work.
+- Reduce clutter by moving feeds, rooms, and profile content into their own sidebar-driven views.
 
 ## Notes
 

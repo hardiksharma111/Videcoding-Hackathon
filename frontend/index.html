@@ -6,320 +6,177 @@
     <title>VibeHack | Anonymous Social Space</title>
     <meta
       name="description"
-      content="A privacy-first social platform for anonymous, low-pressure communication."
+      content="A privacy-first social platform for spontaneous, low-pressure communication."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="background-orb orb-one"></div>
-    <div class="background-orb orb-two"></div>
-    <div class="background-grid"></div>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
 
     <div class="app-shell">
-      <aside class="sidebar glass-card">
-        <div class="brand-block">
+      <aside class="left-rail glass">
+        <div class="brand-row">
           <div class="brand-mark">V</div>
           <div>
-            <p class="eyebrow">Hackathon build</p>
+            <p class="eyebrow">Privacy-first</p>
             <h1>VibeHack</h1>
           </div>
         </div>
 
-        <div class="profile-card">
-          <div class="profile-top">
-            <div class="avatar avatar-large">AR</div>
+        <div class="sidebar-search glass-subtle">
+          <span>Search</span>
+          <input id="searchInput" type="search" placeholder="Topics, rooms, people" />
+        </div>
+
+        <nav class="nav-stack" aria-label="Primary navigation">
+          <button class="nav-link active" data-view="home">
+            <span>Home</span>
+            <small>Active chat only</small>
+          </button>
+          <button class="nav-link" data-view="discover">
+            <span>Discover</span>
+            <small>Context feeds</small>
+          </button>
+          <button class="nav-link" data-view="rooms">
+            <span>Rooms</span>
+            <small>Temporary spaces</small>
+          </button>
+          <button class="nav-link" data-view="profile">
+            <span>Profile</span>
+            <small>Anonymity points</small>
+          </button>
+        </nav>
+
+        <button class="cta-button" id="createRoomBtn" type="button">+ New room</button>
+
+        <section class="mini-profile glass-subtle">
+          <div class="mini-profile-top">
+            <div class="avatar avatar-lg">EB</div>
             <div>
-              <p class="label">Anonymous profile</p>
+              <p class="label">Anonymous user</p>
               <h2>EchoBloom</h2>
-              <p class="muted">Online now · privacy-first identity</p>
+              <p class="muted">Online · Veteran tier</p>
             </div>
-          </div>
-          <div class="points-card">
-            <div>
-              <p class="label">Anonymity points</p>
-              <strong>742</strong>
-            </div>
-            <span class="tier badge-veteran">Veteran</span>
           </div>
           <div class="meter">
             <span style="width: 78%"></span>
           </div>
-          <div class="profile-stats">
+          <div class="mini-profile-stats">
+            <div>
+              <strong>742</strong>
+              <span>Points</span>
+            </div>
             <div>
               <strong>18</strong>
-              <span>rooms joined</span>
+              <span>Rooms</span>
             </div>
             <div>
               <strong>96%</strong>
-              <span>trust score</span>
-            </div>
-            <div>
-              <strong>24h</strong>
-              <span>message expiry</span>
+              <span>Trust</span>
             </div>
           </div>
-        </div>
-
-        <nav class="side-nav">
-            <button class="nav-item active" data-view="home">
-            <span>Home</span>
-            <small>Overview</small>
-          </button>
-          <button class="nav-item" data-view="feeds">
-            <span>Context feeds</span>
-            <small>Topics</small>
-          </button>
-          <button class="nav-item" data-view="rooms">
-            <span>Chatrooms</span>
-            <small>Temporary</small>
-          </button>
-          <button class="nav-item" data-view="profile">
-            <span>Profile</span>
-            <small>Settings</small>
-          </button>
-        </nav>
-
-        <div class="sidebar-footer">
-          <p class="label">Live safety</p>
-          <p class="muted">Anonymous replies, limited rooms, temporary messages, and quick report actions are visible throughout the interface.</p>
-        </div>
+        </section>
       </aside>
 
-      <main class="main-panel">
-        <header class="topbar glass-card">
+      <main class="workspace glass">
+        <header class="workspace-top">
           <div>
             <p class="eyebrow">Spontaneous, low-pressure communication</p>
-            <h2>Discover rooms, post freely, and keep identity private.</h2>
+            <h2 id="pageTitle">Home</h2>
+            <p id="pageSubtitle">Your active chat sits front and center.</p>
           </div>
-          <div class="topbar-actions">
-            <label class="search-box">
-              <span>Search</span>
-              <input type="search" id="topicSearch" placeholder="Search topics, rooms, or interests" />
-            </label>
-            <button class="primary-btn" id="createRoomBtn">+ New room</button>
+          <div class="workspace-chips">
+            <span>Anonymous</span>
+            <span>Temporary</span>
+            <span>Mobile friendly</span>
           </div>
         </header>
 
-        <section class="dashboard-grid">
-          <article class="hero glass-card">
-            <div class="hero-copy">
-              <p class="eyebrow">Featured space</p>
-              <h3>Speak freely without building a permanent social trail.</h3>
-              <p>
-                A modern social experience shaped around anonymous interaction, topic-based discovery, and temporary chats that disappear when the conversation cools off.
-              </p>
-              <div class="hero-actions">
-                <button class="primary-btn">Join a room</button>
-                <button class="ghost-btn">Browse feeds</button>
-              </div>
-            </div>
-            <div class="hero-panel">
-              <div class="hero-chip">15 users max</div>
-              <div class="hero-chip">24h expiry</div>
-              <div class="hero-chip">Anonymous avatars</div>
-              <div class="hero-preview">
-                <div class="pulse-dot"></div>
-                <div>
-                  <strong>Live topic pulse</strong>
-                  <p>Design, study hacks, mental health, and late-night build energy.</p>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <section class="content-column">
-            <article class="glass-card panel home-panel" id="homePanel">
-              <div class="panel-header">
-                <div>
-                  <p class="label">Homepage</p>
-                  <h3>Active chat and quick actions</h3>
-                </div>
-                <span class="pill">Temporary by design</span>
-              </div>
-              <div class="home-layout">
-                <div class="active-chat-shell">
-                  <div class="chat-header">
-                    <div>
-                      <p class="label">Live room</p>
-                      <h4 id="activeRoomTitle">Pixel cafe</h4>
-                    </div>
-                    <div class="room-tag">12/15 online</div>
-                  </div>
-                  <div class="chat-note">Messages disappear after 24 hours of inactivity.</div>
-                  <div class="chat-messages" id="messageFeed"></div>
-                  <form class="composer" id="messageComposer">
-                    <input id="messageInput" type="text" placeholder="Post something low-pressure..." maxlength="140" />
-                    <button class="primary-btn" type="submit">Send</button>
-                  </form>
-                </div>
-                <div class="mini-stack">
-                  <div class="mini-card glass-soft">
-                    <p class="label">Anonymity points</p>
-                    <strong>742</strong>
-                    <span class="muted">Veteran tier · trust earned through activity</span>
-                  </div>
-                  <div class="mini-card glass-soft">
-                    <p class="label">Quick actions</p>
-                    <div class="quick-actions">
-                      <button type="button" class="ghost-btn small">Whisper</button>
-                      <button type="button" class="ghost-btn small">Report</button>
-                      <button type="button" class="ghost-btn small">Give points</button>
-                    </div>
-                  </div>
-                  <div class="mini-card glass-soft">
-                    <p class="label">Safety</p>
-                    <p class="muted">Only avatar, generated username, and activity status are shown when you inspect another user.</p>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article class="glass-card panel" id="feedsPanel">
-              <div class="panel-header">
-                <div>
-                  <p class="label">Context feed</p>
-                  <h3>Topic streams</h3>
-                </div>
-                <button class="ghost-btn small">See all</button>
-              </div>
-              <div class="topic-grid" id="topicGrid"></div>
-            </article>
-
-            <article class="glass-card panel" id="roomsPanel">
-              <div class="panel-header">
-                <div>
-                  <p class="label">Suggested rooms</p>
-                  <h3>Active temporary chatrooms</h3>
-                </div>
-                <span class="pill">Auto-clean after inactivity</span>
-              </div>
-              <div class="room-list" id="roomList"></div>
-            </article>
-          </section>
-
-          <aside class="right-rail">
-            <article class="glass-card panel bio-card profile-card-panel" id="profilePanel">
-              <div class="panel-header compact">
-                <div>
-                  <p class="label">Profile glimpse</p>
-                  <h3>Minimal visibility</h3>
-                </div>
-              </div>
-              <p>
-                When users open another profile, only the avatar, randomly generated username, and current activity status are visible.
-              </p>
-              <button class="bio-mini-card user-card" id="openUserCard" type="button">
-                <div class="avatar">?A</div>
-                <div>
-                  <strong>User436</strong>
-                  <p class="muted">Offline · Bio hidden</p>
-                </div>
-              </button>
-              <div class="status-strip">
-                <span class="status-dot online"></span>
-                <p>Nearby viewer sees limited profile data only.</p>
-              </div>
-            </article>
-
-            <article class="glass-card panel activity-card">
-              <div class="panel-header compact">
-                <div>
-                  <p class="label">Today</p>
-                  <h3>Activity snapshot</h3>
-                </div>
-              </div>
-              <div class="activity-list">
-                <div><span>Messages posted</span><strong>42</strong></div>
-                <div><span>Rooms explored</span><strong>11</strong></div>
-                <div><span>Reports resolved</span><strong>4</strong></div>
-              </div>
-            </article>
-
-            <article class="glass-card panel trust-card">
-              <div class="panel-header compact">
-                <div>
-                  <p class="label">Trust ladder</p>
-                  <h3>Anonymity points</h3>
-                </div>
-              </div>
-              <div class="trust-tiers">
-                <div><span>0-100</span><strong>Newbie</strong></div>
-                <div><span>100-500</span><strong>Trusted</strong></div>
-                <div><span>500+</span><strong>Veteran</strong></div>
-              </div>
-            </article>
-          </aside>
-        </section>
-
-        <section class="footer-strip glass-card">
-          <div>
-            <p class="label">Design direction</p>
-            <h3>Glassmorphism, soft gradients, and playful motion for a friendly anonymous community.</h3>
-          </div>
-          <div class="footer-tags">
-            <span>Mobile-first</span>
-            <span>Accessible</span>
-            <span>Responsive</span>
-          </div>
-        </section>
+        <section id="viewRoot" class="view-root"></section>
       </main>
+
+      <aside class="right-rail glass" id="rightRail">
+        <section class="rail-card glass-subtle">
+          <p class="label">Live room</p>
+          <h3 id="railRoomTitle">Pixel cafe</h3>
+          <p id="railRoomText" class="muted">12/15 users active · messages expire after 24 hours of inactivity.</p>
+        </section>
+
+        <section class="rail-card glass-subtle">
+          <p class="label">Safety</p>
+          <p>
+            Only avatar, generated username, and activity status are visible when viewing another user.
+          </p>
+          <button class="ghost-button" id="openProfileBtn" type="button">View anonymous profile</button>
+        </section>
+
+        <section class="rail-card glass-subtle">
+          <p class="label">Quick actions</p>
+          <div class="rail-actions">
+            <button class="ghost-button" type="button">Whisper</button>
+            <button class="ghost-button" type="button">Report</button>
+            <button class="ghost-button" type="button">Give points</button>
+          </div>
+        </section>
+      </aside>
     </div>
 
     <div class="modal-backdrop hidden" id="roomModal">
-      <div class="modal glass-card">
-        <button class="close-btn" id="closeModalBtn" aria-label="Close create room dialog">×</button>
-        <p class="eyebrow">Create a new room</p>
-        <h3>Start a temporary space</h3>
-        <p class="muted">This preview keeps the creation flow simple while the backend is still in progress.</p>
+      <div class="modal glass">
+        <button class="close-btn" id="closeRoomModal" aria-label="Close create room dialog">×</button>
+        <p class="eyebrow">Create room</p>
+        <h3>Start a temporary chatroom</h3>
+        <p class="muted">Create a low-pressure room that keeps conversation private and ephemeral.</p>
         <div class="modal-grid">
           <label>
             <span>Room name</span>
             <input type="text" placeholder="Late night ideas" />
           </label>
           <label>
-            <span>Category</span>
+            <span>Topic</span>
             <input type="text" placeholder="Design" />
           </label>
         </div>
-        <button class="primary-btn full-width">Create room</button>
+        <button class="cta-button full-width" type="button">Create room</button>
       </div>
     </div>
 
     <div class="modal-backdrop hidden" id="profileModal">
-      <div class="modal glass-card profile-modal">
+      <div class="modal glass profile-modal">
         <button class="close-btn" id="closeProfileBtn" aria-label="Close profile dialog">×</button>
-        <p class="eyebrow">Anonymous user profile</p>
-        <div class="profile-modal-top">
-          <div class="avatar avatar-large">U4</div>
+        <p class="eyebrow">Anonymous profile</p>
+        <div class="profile-top">
+          <div class="avatar avatar-lg">U4</div>
           <div>
             <h3 id="profileName">User436</h3>
-            <p class="muted">Online · bio hidden · randomly generated name</p>
+            <p class="muted">Offline · generated username · bio hidden</p>
           </div>
         </div>
-        <div class="profile-modal-stats">
+        <div class="profile-grid">
           <div>
             <span>Anonymity points</span>
             <strong>412</strong>
           </div>
           <div>
-            <span>Trust tier</span>
+            <span>Tier</span>
             <strong>Trusted</strong>
           </div>
           <div>
-            <span>Room activity</span>
+            <span>Activity</span>
             <strong>Recent</strong>
           </div>
         </div>
         <div class="profile-actions">
-          <button class="ghost-btn" type="button">Whisper to user</button>
-          <button class="ghost-btn" type="button">Give points</button>
-          <button class="ghost-btn danger" type="button">Report user</button>
+          <button class="ghost-button" type="button">Whisper</button>
+          <button class="ghost-button" type="button">Give points</button>
+          <button class="ghost-button danger" type="button">Report user</button>
         </div>
       </div>
     </div>
