@@ -67,7 +67,7 @@
         </div>
 
         <nav class="side-nav">
-          <button class="nav-item active" data-view="home">
+            <button class="nav-item active" data-view="home">
             <span>Home</span>
             <small>Overview</small>
           </button>
@@ -134,7 +134,53 @@
           </article>
 
           <section class="content-column">
-            <article class="glass-card panel">
+            <article class="glass-card panel home-panel" id="homePanel">
+              <div class="panel-header">
+                <div>
+                  <p class="label">Homepage</p>
+                  <h3>Active chat and quick actions</h3>
+                </div>
+                <span class="pill">Temporary by design</span>
+              </div>
+              <div class="home-layout">
+                <div class="active-chat-shell">
+                  <div class="chat-header">
+                    <div>
+                      <p class="label">Live room</p>
+                      <h4 id="activeRoomTitle">Pixel cafe</h4>
+                    </div>
+                    <div class="room-tag">12/15 online</div>
+                  </div>
+                  <div class="chat-note">Messages disappear after 24 hours of inactivity.</div>
+                  <div class="chat-messages" id="messageFeed"></div>
+                  <form class="composer" id="messageComposer">
+                    <input id="messageInput" type="text" placeholder="Post something low-pressure..." maxlength="140" />
+                    <button class="primary-btn" type="submit">Send</button>
+                  </form>
+                </div>
+                <div class="mini-stack">
+                  <div class="mini-card glass-soft">
+                    <p class="label">Anonymity points</p>
+                    <strong>742</strong>
+                    <span class="muted">Veteran tier · trust earned through activity</span>
+                  </div>
+                  <div class="mini-card glass-soft">
+                    <p class="label">Quick actions</p>
+                    <div class="quick-actions">
+                      <button type="button" class="ghost-btn small">Whisper</button>
+                      <button type="button" class="ghost-btn small">Report</button>
+                      <button type="button" class="ghost-btn small">Give points</button>
+                    </div>
+                  </div>
+                  <div class="mini-card glass-soft">
+                    <p class="label">Safety</p>
+                    <p class="muted">Only avatar, generated username, and activity status are shown when you inspect another user.</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="glass-card panel" id="feedsPanel">
               <div class="panel-header">
                 <div>
                   <p class="label">Context feed</p>
@@ -145,7 +191,7 @@
               <div class="topic-grid" id="topicGrid"></div>
             </article>
 
-            <article class="glass-card panel">
+            <article class="glass-card panel" id="roomsPanel">
               <div class="panel-header">
                 <div>
                   <p class="label">Suggested rooms</p>
@@ -158,7 +204,7 @@
           </section>
 
           <aside class="right-rail">
-            <article class="glass-card panel bio-card">
+            <article class="glass-card panel bio-card profile-card-panel" id="profilePanel">
               <div class="panel-header compact">
                 <div>
                   <p class="label">Profile glimpse</p>
@@ -168,12 +214,16 @@
               <p>
                 When users open another profile, only the avatar, randomly generated username, and current activity status are visible.
               </p>
-              <div class="bio-mini-card">
+              <button class="bio-mini-card user-card" id="openUserCard" type="button">
                 <div class="avatar">?A</div>
                 <div>
                   <strong>User436</strong>
                   <p class="muted">Offline · Bio hidden</p>
                 </div>
+              </button>
+              <div class="status-strip">
+                <span class="status-dot online"></span>
+                <p>Nearby viewer sees limited profile data only.</p>
               </div>
             </article>
 
@@ -188,6 +238,20 @@
                 <div><span>Messages posted</span><strong>42</strong></div>
                 <div><span>Rooms explored</span><strong>11</strong></div>
                 <div><span>Reports resolved</span><strong>4</strong></div>
+              </div>
+            </article>
+
+            <article class="glass-card panel trust-card">
+              <div class="panel-header compact">
+                <div>
+                  <p class="label">Trust ladder</p>
+                  <h3>Anonymity points</h3>
+                </div>
+              </div>
+              <div class="trust-tiers">
+                <div><span>0-100</span><strong>Newbie</strong></div>
+                <div><span>100-500</span><strong>Trusted</strong></div>
+                <div><span>500+</span><strong>Veteran</strong></div>
               </div>
             </article>
           </aside>
@@ -224,6 +288,39 @@
           </label>
         </div>
         <button class="primary-btn full-width">Create room</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="profileModal">
+      <div class="modal glass-card profile-modal">
+        <button class="close-btn" id="closeProfileBtn" aria-label="Close profile dialog">×</button>
+        <p class="eyebrow">Anonymous user profile</p>
+        <div class="profile-modal-top">
+          <div class="avatar avatar-large">U4</div>
+          <div>
+            <h3 id="profileName">User436</h3>
+            <p class="muted">Online · bio hidden · randomly generated name</p>
+          </div>
+        </div>
+        <div class="profile-modal-stats">
+          <div>
+            <span>Anonymity points</span>
+            <strong>412</strong>
+          </div>
+          <div>
+            <span>Trust tier</span>
+            <strong>Trusted</strong>
+          </div>
+          <div>
+            <span>Room activity</span>
+            <strong>Recent</strong>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="ghost-btn" type="button">Whisper to user</button>
+          <button class="ghost-btn" type="button">Give points</button>
+          <button class="ghost-btn danger" type="button">Report user</button>
+        </div>
       </div>
     </div>
 

@@ -10,6 +10,9 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Improve the visual design beyond the sketch while keeping the login idea out for now.
 - Keep the UI simple, intuitive, mobile-friendly, and suitable for judges.
 - Add a concise explanation sheet for judges and collaborators.
+- Evolve the prototype into a richer product shell with active chat, temporary rooms, topic feeds, and profile visibility controls.
+- Add a trust ladder / anonymity points surface and a judge-friendly interactive layout.
+- Keep the design glassy, bubbly, and clearly separated from backend work.
 
 ## Notes
 
