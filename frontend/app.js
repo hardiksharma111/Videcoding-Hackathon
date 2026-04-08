@@ -132,16 +132,19 @@ const state = {
   walkthroughTimer: null,
   viewTransitionTimer: null,
   authMode: 'login',
+  backendSyncReady: false,
+  socketReady: false,
+  socketId: null,
 };
+
+let socketClient = null;
 
 const els = {
   authGate: document.getElementById('authGate'),
   appShellRoot: document.getElementById('appShellRoot'),
   authModeLoginBtn: document.getElementById('authModeLoginBtn'),
   authModeSignupBtn: document.getElementById('authModeSignupBtn'),
-  authNameFieldWrap: document.getElementById('authNameFieldWrap'),
-  authNameInput: document.getElementById('authNameInput'),
-  authEmailInput: document.getElementById('authEmailInput'),
+  authUsernameInput: document.getElementById('authUsernameInput'),
   authPasswordInput: document.getElementById('authPasswordInput'),
   authSwitchHint: document.getElementById('authSwitchHint'),
   authErrorText: document.getElementById('authErrorText'),
@@ -359,7 +362,6 @@ function setAuthMode(mode) {
   const isSignup = mode === 'signup';
   els.authModeLoginBtn.classList.toggle('active', !isSignup);
   els.authModeSignupBtn.classList.toggle('active', isSignup);
-  els.authNameFieldWrap.style.display = isSignup ? 'grid' : 'none';
   els.authSubmitBtn.textContent = isSignup ? 'Create account' : 'Login';
   els.authSwitchHint.textContent = isSignup
     ? 'Already have an account? Switch to Login.'
@@ -377,20 +379,19 @@ function showAuthGate() {
   els.authGate.classList.remove('hidden');
 }
 
-function handleAuthSubmit() {
-  const name = els.authNameInput.value.trim();
-  const email = els.authEmailInput.value.trim();
+async function handleAuthSubmit() {
+  const username = els.authUsernameInput.value.trim();
   const password = els.authPasswordInput.value;
 
   if (state.authMode === 'signup') {
-    const result = window.AuthUtils.signup({ name, email, password });
+    const result = await window.AuthUtils.signupWithFallback({ username, password });
     if (!result.ok) {
       setAuthError(result.error);
       return;
     }
     showToast('Account created. Welcome to VibeHack.', 'success');
   } else {
-    const result = window.AuthUtils.login({ email, password });
+    const result = await window.AuthUtils.loginWithFallback({ username, password });
     if (!result.ok) {
       setAuthError(result.error);
       return;
@@ -402,26 +403,154 @@ function handleAuthSubmit() {
   els.authPasswordInput.value = '';
   hydrateAnonymousIdentity();
   showAppShell();
+  await bootstrapBackendConnections();
   render();
   ensureOnboarding();
 }
 
-function continueAsGuest() {
+async function continueAsGuest() {
   const guestSession = window.AuthUtils.loginAsGuest();
-  els.authNameInput.value = guestSession.name;
-  els.authEmailInput.value = guestSession.email;
+  els.authUsernameInput.value = guestSession.username;
   els.authPasswordInput.value = '';
   showToast('Continuing as guest', 'info');
   hydrateAnonymousIdentity();
   showAppShell();
+  await bootstrapBackendConnections();
   render();
   ensureOnboarding();
 }
 
 function logout() {
+  if (socketClient) {
+    socketClient.disconnect();
+    socketClient = null;
+  }
+  state.socketReady = false;
+  state.socketId = null;
+  state.backendSyncReady = false;
   window.AuthUtils.logout();
   showToast('Logged out', 'info');
   showAuthGate();
+}
+
+function mapBackendRoom(entry) {
+  const count = Number(entry.user_count || 0);
+  return {
+    title: entry.room_name,
+    category: entry.category || 'General',
+    users: `${Math.min(count, 15)}/15`,
+    status: 'Live',
+    description: `Trending room with ${count} active participant${count === 1 ? '' : 's'}.`,
+    selected: false,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 12 * 60 * 60000,
+  };
+}
+
+async function syncTrendingRoomsFromBackend() {
+  const apiBase = window.AuthUtils?.getApiBase() || '';
+  try {
+    const response = await fetch(`${apiBase}/api/rooms/trending`);
+    if (!response.ok) {
+      return;
+    }
+    const payload = await response.json();
+    const trending = Array.isArray(payload.trending_rooms) ? payload.trending_rooms : [];
+    if (!trending.length) {
+      return;
+    }
+
+    const mapped = trending.map(mapBackendRoom);
+    const existingTitles = new Set(rooms.map((room) => room.title));
+    mapped.forEach((room) => {
+      if (!existingTitles.has(room.title)) {
+        rooms.unshift(room);
+      }
+    });
+
+    savePersistentState();
+  } catch (_error) {
+    // Keep local fallback data if backend is unavailable.
+  }
+}
+
+async function syncProfileFromBackend() {
+  const session = window.AuthUtils.getSession();
+  if (!session?.token) {
+    return;
+  }
+  const apiBase = window.AuthUtils?.getApiBase() || '';
+  try {
+    const response = await fetch(`${apiBase}/api/users/me`, {
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+    if (!response.ok) {
+      return;
+    }
+    const me = await response.json();
+    if (me?.username) {
+      anonymousUser.name = me.username;
+      anonymousUser.status = `Online · ${Math.max(0, Number(me.auth_points || 0))} authenticity points`;
+      hydrateAnonymousIdentity();
+    }
+  } catch (_error) {
+    // Non-blocking profile sync.
+  }
+}
+
+function connectSocketIfAvailable() {
+  if (socketClient || typeof window.io !== 'function') {
+    return;
+  }
+
+  const apiBase = window.AuthUtils?.getApiBase() || '';
+  socketClient = window.io(apiBase || '/', {
+    transports: ['websocket', 'polling'],
+  });
+
+  socketClient.on('connect', () => {
+    state.socketReady = true;
+    state.socketId = socketClient.id;
+  });
+
+  socketClient.on('disconnect', () => {
+    state.socketReady = false;
+    state.socketId = null;
+  });
+
+  socketClient.on('receive_message', (payload) => {
+    const activeRoomTitle = state.room?.title;
+    if (!activeRoomTitle) {
+      return;
+    }
+    const messages = getRoomMessages(activeRoomTitle);
+    messages.push({
+      author: payload.sender || 'Ghost',
+      body: payload.message || '',
+      me: false,
+      time: 'now',
+    });
+    savePersistentState();
+    if (state.view === 'room') {
+      renderRoomInterface();
+    }
+  });
+
+  socketClient.on('system_message', (payload) => {
+    showToast(payload.msg || 'Room update', 'info');
+  });
+}
+
+async function bootstrapBackendConnections() {
+  if (state.backendSyncReady) {
+    return;
+  }
+  await syncTrendingRoomsFromBackend();
+  await syncProfileFromBackend();
+  connectSocketIfAvailable();
+  state.backendSyncReady = true;
 }
 
 function applyTheme(theme, options = {}) {
@@ -979,18 +1108,22 @@ function renderRoomInterface() {
     if (!nextMessage) {
       return;
     }
-    messages.push({
-      author: anonymousUser.name,
-      body: nextMessage,
-      me: true,
-      time: 'now',
-    });
-    messages.push({
-      author: 'System',
-      body: `${anonymousUser.name} sent a new message`,
-      me: false,
-      time: 'just now',
-    });
+    if (socketClient && state.socketReady) {
+      socketClient.emit('send_message', { message: nextMessage });
+    } else {
+      messages.push({
+        author: anonymousUser.name,
+        body: nextMessage,
+        me: true,
+        time: 'now',
+      });
+      messages.push({
+        author: 'System',
+        body: `${anonymousUser.name} sent a new message`,
+        me: false,
+        time: 'just now',
+      });
+    }
     state.chatDraft = '';
     state.typingIndicatorRoom = null;
     savePersistentState();
@@ -1083,9 +1216,19 @@ function renderRooms() {
     button.addEventListener('click', (event) => {
       const roomTitle = event.currentTarget.dataset.room;
       setRoom(roomTitle);
-      const roomLog = getRoomMessages(roomTitle);
-      roomLog.push({ author: 'System', body: `${anonymousUser.name} joined the room`, me: false, time: 'now' });
-      savePersistentState();
+      const session = window.AuthUtils.getSession();
+      const room = rooms.find((entry) => entry.title === roomTitle);
+      if (socketClient && state.socketReady) {
+        socketClient.emit('join_room', {
+          room_name: roomTitle,
+          category: room?.category || 'General',
+          permanent_username: session?.username || session?.name || 'guest',
+        });
+      } else {
+        const roomLog = getRoomMessages(roomTitle);
+        roomLog.push({ author: 'System', body: `${anonymousUser.name} joined the room`, me: false, time: 'now' });
+        savePersistentState();
+      }
       setView('room');
       showToast(`Entered ${roomTitle}`, 'success');
     });
@@ -1667,6 +1810,7 @@ setAuthMode('login');
 
 if (window.AuthUtils.getSession()) {
   showAppShell();
+  bootstrapBackendConnections();
   render();
   ensureOnboarding();
 } else {

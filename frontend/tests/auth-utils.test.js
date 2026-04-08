@@ -32,15 +32,14 @@ describe('AuthUtils', () => {
     AuthUtils._resetForTests();
   });
 
-  it('validates email format', () => {
-    expect(AuthUtils.validateEmail('test@example.com')).toBe(true);
-    expect(AuthUtils.validateEmail('bad-email')).toBe(false);
+  it('validates username format', () => {
+    expect(AuthUtils.validateUsername('test_user')).toBe(true);
+    expect(AuthUtils.validateUsername('x')).toBe(false);
   });
 
   it('rejects signup when password is too short', () => {
     const result = AuthUtils.signup({
-      name: 'Demo',
-      email: 'demo@example.com',
+      username: 'demo_user',
       password: '123',
     });
 
@@ -50,30 +49,28 @@ describe('AuthUtils', () => {
 
   it('creates account and session on signup', () => {
     const result = AuthUtils.signup({
-      name: 'Demo User',
-      email: 'demo@example.com',
+      username: 'demo_user',
       password: 'password123',
     });
 
     expect(result.ok).toBe(true);
-    expect(AuthUtils.getSession().email).toBe('demo@example.com');
+    expect(AuthUtils.getSession().username).toBe('demo_user');
   });
 
   it('logs in with existing account credentials', () => {
     AuthUtils.signup({
-      name: 'Demo User',
-      email: 'demo@example.com',
+      username: 'demo_user',
       password: 'password123',
     });
     AuthUtils.logout();
 
     const login = AuthUtils.login({
-      email: 'demo@example.com',
+      username: 'demo_user',
       password: 'password123',
     });
 
     expect(login.ok).toBe(true);
-    expect(AuthUtils.getSession().name).toBe('Demo User');
+    expect(AuthUtils.getSession().name).toBe('demo_user');
   });
 
   it('creates guest session', () => {
