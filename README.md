@@ -97,8 +97,18 @@ From `frontend/`:
 No repo workflow is required. Fastest zero-config option:
 
 1. Import this repo into Vercel.
-2. Set Root Directory to `frontend`.
-3. Deploy.
+2. Keep project root at repo root (do not use `frontend` root override).
+3. Deploy (repo includes `vercel.json` to force static frontend output and avoid Next.js auto-detection).
+
+### Frontend + Backend Sync on Vercel
+
+This repo now includes `vercel.json` rewrites so the frontend and backend stay connected automatically:
+
+- `/api/*` -> proxied to backend deployment
+- `/socket.io/*` -> proxied to backend deployment
+- all other routes -> SPA fallback to `frontend/index.html`
+
+Current backend target is configured in `vercel.json`. If your backend domain changes, update only these two rewrite destinations once and redeploy.
 
 You can also use Netlify with the same setup:
 

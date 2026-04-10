@@ -22,7 +22,12 @@ async function capture(page, name) {
 }
 
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ viewport: { width: 1512, height: 768 } });
+const context = await browser.newContext({
+  viewport: { width: 1920, height: 1080 },
+  isMobile: false,
+  hasTouch: false,
+  deviceScaleFactor: 1,
+});
 const page = await context.newPage();
 
 await page.goto('http://127.0.0.1:8000/', { waitUntil: 'networkidle' });
