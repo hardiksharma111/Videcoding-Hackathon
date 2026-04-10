@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -31,7 +31,7 @@
           <button class="ghost-button" id="authModeSignupBtn" type="button">Sign up</button>
         </div>
 
-        <div class="modal-grid single">
+                <div class="modal-grid single">
           <label>
             <span>Username</span>
             <input id="authUsernameInput" type="text" placeholder="ghost_name" />
@@ -51,19 +51,19 @@
         <div class="profile-actions">
           <button class="cta-button" id="authSubmitBtn" type="button">Login</button>
           <button class="ghost-button" id="authGuestBtn" type="button">Continue as guest</button>
-          <div class="modal-grid single" id="authNameFieldWrap" style="display:none;">
-            <label>
-              <span>Name</span>
-              <input id="authNameInput" type="text" placeholder="Your display name" />
-            </label>
-          </div>
+        </div>
+      </div>
+    </section>
 
-          <div class="modal-grid single" id="authEmailFieldWrap" style="display:none;">
-            <label>
-              <span>Email</span>
-              <input id="authEmailInput" type="email" placeholder="you@example.com" />
-            </label>
+    <div class="app-shell hidden" id="appShellRoot">
+      <aside class="left-rail glass">
+        <div class="brand-row">
+          <div class="brand-mark">V</div>
+          <div class="brand-copy">
+            <p class="eyebrow">Privacy-first</p>
+            <h1>VibeHack</h1>
           </div>
+          <button class="icon-button rail-toggle" id="sidebarToggleBtn" type="button" aria-label="Toggle sidebar">☰</button>
         </div>
 
         <section class="mini-profile glass-subtle">
@@ -307,7 +307,6 @@
     </nav>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-    <script src="config.js"></script>
     <script src="auth-utils.js"></script>
     <script src="app.js"></script>
   </body>
